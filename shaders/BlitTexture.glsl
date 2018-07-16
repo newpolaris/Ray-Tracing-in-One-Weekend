@@ -86,14 +86,25 @@ vec3 toneMapAndtoSRGB(vec3 L)
     return L;
 }
 
+#define TONEMAPPING_ACES0 0
+#define TONEMAPPING_ACES1 1
+#define TONEMAPPING_NONE 2
+
+#define TONEMAPPING_METHOD TONEMAPPING_ACES0
+
 // ----------------------------------------------------------------------------
 void main() 
 {
     vec3 samples = texture(uTexSource, vTexcoords).rgb;
 
-	// vec3 col = aces_fitted(samples);
-	// col = toSRGB(col);
-    vec3 col = toneMapAndtoSRGB(samples);
+#if TONEMAPPING_METHOD == TONEMAPPING_ACES0
+	vec3 color = aces_fitted(samples);
+	color = toSRGB(color);
+#elif TONEMAPPING_METHOD == TONEMAPPING_ACES1
+    vec3 color = toneMapAndtoSRGB(samples);
+#else
+	vec3 color = samples;
+#endif
 
-	fragColor = col;
+	fragColor = color;
 }

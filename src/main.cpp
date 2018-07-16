@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <GameCore.h>
 #include "Atmosphere.h"
+#include <Math/Ray.h>
 
 enum ProfilerType { ProfilerTypeRender = 0 };
 
@@ -42,7 +43,7 @@ namespace
 
 struct SceneSettings
 {
-    bool bCPU = false;
+    bool bCPU = true;
     bool bProfile = true;
     bool bUiChanged = false;
     bool bResized = false;
@@ -116,11 +117,52 @@ glm::mat4 jitterProjMatrix(const glm::mat4& proj, int sampleCount, float jitterA
     return ret;
 }
 
-class LightScattering final : public gamecore::IGameApp
+glm::vec3 getColor(const Math::Ray& ray) 
+{
+	auto dir = glm::normalize(ray.direction());
+	float t = 0.5f * dir.y + 1.f;
+	return glm::mix(glm::vec3(1.f), glm::vec3(0.5f, 0.7f, 1.f), t);
+}
+
+void test(std::vector<glm::vec4>& image, int width, int height)
+{
+	glm::vec3 lowerLeftCorner(-2.f, -1.f, -1.f);
+	glm::vec3 horizontal(4.f, 0.f, 0.f);
+	glm::vec3 vertical(0.f, 2.f, 0.f);
+	glm::vec3 origin(0.f);
+
+	for (int y = height - 1; y >= 0; y--)
+	for (int x = width - 1; x >= 0; x--)
+	{
+		float u = float(x) / width;
+		float v = float(y) / height;
+		Math::Ray r(origin, lowerLeftCorner + u*horizontal + v*vertical);
+		glm::vec4 color = glm::vec4(getColor(r), 1.f);
+
+        image[y*width + x] = color;
+	}
+}
+
+void writeToPPM(std::vector<glm::vec4>& image, int width, int height)
+{
+	FILE* pFile = fopen("result.ppm", "wb");
+	fprintf(pFile, "P3\n");
+	fprintf(pFile, "%d %d\n", width, height);
+	fprintf(pFile, "255\n");
+	for (int y = 0; y < height; y++)
+	for (int x = 0; x < width; x++)
+	{
+		glm::ivec4 color = image[y*width + x] * 255.99f;
+		fprintf(pFile, "%d %d %d\n", color.r, color.g, color.b);
+	}
+	fclose(pFile);
+}
+
+class RayTracer final : public gamecore::IGameApp
 {
 public:
-	LightScattering() noexcept;
-	virtual ~LightScattering() noexcept;
+	RayTracer() noexcept;
+	virtual ~RayTracer() noexcept;
 
 	virtual void startup() noexcept override;
 	virtual void closeup() noexcept override;
@@ -149,17 +191,17 @@ private:
     GraphicsDevicePtr m_Device;
 };
 
-CREATE_APPLICATION(LightScattering);
+CREATE_APPLICATION(RayTracer);
 
-LightScattering::LightScattering() noexcept
+RayTracer::RayTracer() noexcept
 {
 }
 
-LightScattering::~LightScattering() noexcept
+RayTracer::~RayTracer() noexcept
 {
 }
 
-void LightScattering::startup() noexcept
+void RayTracer::startup() noexcept
 {
 	profiler::initialize();
 
@@ -192,13 +234,13 @@ void LightScattering::startup() noexcept
     m_Samples = Halton2D(m_Settings.numSamples, 0);
 }
 
-void LightScattering::closeup() noexcept
+void RayTracer::closeup() noexcept
 {
     m_ScreenTraingle.destroy();
 	profiler::shutdown();
 }
 
-void LightScattering::update() noexcept
+void RayTracer::update() noexcept
 {
     bool bCameraUpdated = m_Camera.update();
 
@@ -216,12 +258,12 @@ void LightScattering::update() noexcept
     m_Settings.bUpdated = (m_Settings.bUiChanged || bCameraUpdated || bResized);
     if (m_Settings.bUpdated && m_Settings.bCPU)
     {
-        float angle = glm::radians(m_Settings.angle);
+        const float angle = glm::radians(m_Settings.angle);
         std::vector<glm::vec4> image(width*height, glm::vec4(0.f));
         glm::vec3 sunDir = glm::vec3(0.0f, glm::cos(angle), -glm::sin(angle));
 
-        Atmosphere atmosphere(sunDir);
-        atmosphere.renderSkyDome(image, width, height);
+		test(image, width, height);
+		writeToPPM(image, width, height);
 
         GraphicsTextureDesc colorDesc;
         colorDesc.setWidth(width);
@@ -233,7 +275,7 @@ void LightScattering::update() noexcept
     }
 }
 
-void LightScattering::updateHUD() noexcept
+void RayTracer::updateHUD() noexcept
 {
     bool bUpdated = false;
     float width = (float)getWindowWidth(), height = (float)getWindowHeight();
@@ -260,7 +302,7 @@ void LightScattering::updateHUD() noexcept
     m_Settings.bUiChanged = bUpdated;
 }
 
-void LightScattering::render() noexcept
+void RayTracer::render() noexcept
 {
     bool bUpdate = m_Settings.bProfile || m_Settings.bUpdated;
 
@@ -313,7 +355,7 @@ void LightScattering::render() noexcept
 
 }
 
-void LightScattering::keyboardCallback(uint32_t key, bool isPressed) noexcept
+void RayTracer::keyboardCallback(uint32_t key, bool isPressed) noexcept
 {
 	switch (key)
 	{
@@ -335,7 +377,7 @@ void LightScattering::keyboardCallback(uint32_t key, bool isPressed) noexcept
 	}
 }
 
-void LightScattering::framesizeCallback(int32_t width, int32_t height) noexcept
+void RayTracer::framesizeCallback(int32_t width, int32_t height) noexcept
 {
 	float aspectRatio = (float)width/height;
 	m_Camera.setProjectionParams(45.0f, aspectRatio, 0.1f, 100.0f);
@@ -359,19 +401,19 @@ void LightScattering::framesizeCallback(int32_t width, int32_t height) noexcept
     m_ColorRenderTarget = m_Device->createFramebuffer(desc);;
 }
 
-void LightScattering::motionCallback(float xpos, float ypos, bool bPressed) noexcept
+void RayTracer::motionCallback(float xpos, float ypos, bool bPressed) noexcept
 {
 	const bool mouseOverGui = ImGui::MouseOverArea();
 	if (!mouseOverGui && bPressed) m_Camera.motionHandler(int(xpos), int(ypos), false);    
 }
 
-void LightScattering::mouseCallback(float xpos, float ypos, bool bPressed) noexcept
+void RayTracer::mouseCallback(float xpos, float ypos, bool bPressed) noexcept
 {
 	const bool mouseOverGui = ImGui::MouseOverArea();
 	if (!mouseOverGui && bPressed) m_Camera.motionHandler(int(xpos), int(ypos), true); 
 }
 
-GraphicsDevicePtr LightScattering::createDevice(const GraphicsDeviceDesc& desc) noexcept
+GraphicsDevicePtr RayTracer::createDevice(const GraphicsDeviceDesc& desc) noexcept
 {
 	GraphicsDeviceType deviceType = desc.getDeviceType();
 
