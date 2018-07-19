@@ -22,19 +22,20 @@
 #include <GLType/OGLCoreFramebuffer.h>
 
 #include <GraphicsTypes.h>
-#include "Mesh.h"
-#include "BasicMesh.h"
 
 #include <fstream>
 #include <memory>
 #include <vector>
 #include <algorithm>
 #include <GameCore.h>
-#include "Atmosphere.h"
 #include <Math/Ray.h>
 #include <Math/Random.h>
+#include "Atmosphere.h"
 #include "Sphere.h"
 #include "Camera.h"
+#include <Material.h>
+#include <Mesh.h>
+#include <BasicMesh.h>
 
 enum ProfilerType { ProfilerTypeRender = 0 };
 
@@ -120,19 +121,20 @@ glm::mat4 jitterProjMatrix(const glm::mat4& proj, int sampleCount, float jitterA
     return ret;
 }
 
-const float RAY_MIN = 0.0001f;
-const float RAY_MAX = 1e8f;
-
-glm::vec3 color(const HitableList& hitables, const Math::Ray& ray) 
+glm::vec3 color(const Math::Ray& ray, const HitableList& world, int depth) 
 {
+	const float RAY_MIN = 0.0001f;
+	const float RAY_MAX = 1e8f;
+
 	HitRecord rec = { 0 };
 
-	if (hit(hitables.begin(), hitables.end(), ray, RAY_MIN, RAY_MAX, rec)) 
+	if (hit(world.begin(), world.end(), ray, RAY_MIN, RAY_MAX, rec)) 
 	{
-		glm::vec3 target = rec.position + rec.normal + Math::randomUnitSphere();
-		glm::vec3 dir = glm::normalize(target - rec.position);
-		Math::Ray ray(rec.position, dir);
-		return 0.5f * color(hitables, ray);
+		Math::Ray scattered;
+		glm::vec3 attenuation;
+		if (depth < 50 && rec.material->scatter(ray, rec, attenuation, scattered))
+			return attenuation*color(scattered, world, depth + 1);
+		return glm::vec3(0.f);
 	}
 
 	auto dir = glm::normalize(ray.direction());
@@ -143,10 +145,17 @@ glm::vec3 color(const HitableList& hitables, const Math::Ray& ray)
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
 	const int NumSamples = 100;
+	auto matPink = std::make_shared<Lambertian>(glm::vec3(0.8f, 0.3f, 0.3f));
+	auto matGreen = std::make_shared<Lambertian>(glm::vec3(0.8f, 0.8f, 0.0f));
+	auto matIron = std::make_shared<Metal>(glm::vec3(0.8f, 0.6f, 0.2f), 0.3f);
+	auto matCopper = std::make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f), 1.f);
+
 	Camera camera;
-	HitableList hitables;
-	hitables.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 0, -1), 0.5f));
-	hitables.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -100.2f, -1), 100.0f));
+	HitableList world;
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 0, -1), 0.5f, matPink));
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -100.2f, -1), 100.0f, matGreen));
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(1, 0, -1), 0.5f, matIron));
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(-1, 0, -1), 0.5f, matCopper));
 
 	for (int y = height - 1; y >= 0; y--)
 	for (int x = width - 1; x >= 0; x--)
@@ -158,7 +167,7 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 			float v = float(y + Math::BaseRandom()) / height;
 
 			auto ray = camera.ray(u, v);
-			c += glm::vec4(color(hitables, ray), 1.f);
+			c += glm::vec4(color(ray, world, 0), 1.f);
 		}
         image[y*width + x] = c / float(NumSamples);
 	}

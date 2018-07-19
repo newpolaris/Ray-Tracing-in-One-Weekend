@@ -22,9 +22,10 @@ Sphere::Sphere() noexcept
 {
 }
 
-Sphere::Sphere(const glm::vec3& center, float radius) noexcept
+Sphere::Sphere(const glm::vec3& center, float radius, const MaterialPtr& material) noexcept
 	: m_Center(center)
 	, m_Radius(radius)
+	, m_Material(material)
 {
 }
 
@@ -40,6 +41,7 @@ bool Sphere::hit(const Math::Ray& r, float tMin, float tMax, HitRecord& rec) con
 		rec.t = t.x;
 		rec.position = r.position(rec.t);
 		rec.normal = (rec.position - m_Center) / m_Radius;
+		rec.material = m_Material;
 
 		return true;
 	}
@@ -48,6 +50,7 @@ bool Sphere::hit(const Math::Ray& r, float tMin, float tMax, HitRecord& rec) con
 		rec.t = t.y;
 		rec.position = r.position(rec.t);
 		rec.normal = (rec.position - m_Center) / m_Radius;
+		rec.material = m_Material;
 
 		return true;
 	}

@@ -4,12 +4,14 @@
 #include <glm/glm.hpp>
 #include <memory>
 #include <vector>
+#include <Types.h>
 
 struct HitRecord 
 {
 	float t;
 	glm::vec3 position;
 	glm::vec3 normal;
+	MaterialPtr material;
 };
 
 class Hitable
