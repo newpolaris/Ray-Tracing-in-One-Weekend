@@ -37,6 +37,7 @@ namespace gamecore
         virtual void scrollCallback(float xoffset, float yoffset) noexcept;
 	};
 
+	void closeApplication();
 	bool updateApplication(IGameApp& app);
 	void terminateApplication(IGameApp& app);
 	void runApplication(IGameApp& app, std::string name);

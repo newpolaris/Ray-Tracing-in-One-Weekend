@@ -22,8 +22,8 @@
 #include <GLType/OGLCoreFramebuffer.h>
 
 #include <GraphicsTypes.h>
-#include <SkyBox.h>
-#include <Mesh.h>
+#include "Mesh.h"
+#include "BasicMesh.h"
 
 #include <fstream>
 #include <memory>
@@ -32,6 +32,9 @@
 #include <GameCore.h>
 #include "Atmosphere.h"
 #include <Math/Ray.h>
+#include <Math/Random.h>
+#include "Sphere.h"
+#include "Camera.h"
 
 enum ProfilerType { ProfilerTypeRender = 0 };
 
@@ -117,8 +120,21 @@ glm::mat4 jitterProjMatrix(const glm::mat4& proj, int sampleCount, float jitterA
     return ret;
 }
 
-glm::vec3 getColor(const Math::Ray& ray) 
+const float RAY_MIN = 0.0001f;
+const float RAY_MAX = 1e8f;
+
+glm::vec3 color(const HitableList& hitables, const Math::Ray& ray) 
 {
+	HitRecord rec = { 0 };
+
+	if (hit(hitables.begin(), hitables.end(), ray, RAY_MIN, RAY_MAX, rec)) 
+	{
+		glm::vec3 target = rec.position + rec.normal + Math::randomUnitSphere();
+		glm::vec3 dir = glm::normalize(target - rec.position);
+		Math::Ray ray(rec.position, dir);
+		return 0.5f * color(hitables, ray);
+	}
+
 	auto dir = glm::normalize(ray.direction());
 	float t = 0.5f * dir.y + 1.f;
 	return glm::mix(glm::vec3(1.f), glm::vec3(0.5f, 0.7f, 1.f), t);
@@ -126,20 +142,25 @@ glm::vec3 getColor(const Math::Ray& ray)
 
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
-	glm::vec3 lowerLeftCorner(-2.f, -1.f, -1.f);
-	glm::vec3 horizontal(4.f, 0.f, 0.f);
-	glm::vec3 vertical(0.f, 2.f, 0.f);
-	glm::vec3 origin(0.f);
+	const int NumSamples = 100;
+	Camera camera;
+	HitableList hitables;
+	hitables.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 0, -1), 0.5f));
+	hitables.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -100.2f, -1), 100.0f));
 
 	for (int y = height - 1; y >= 0; y--)
 	for (int x = width - 1; x >= 0; x--)
 	{
-		float u = float(x) / width;
-		float v = float(y) / height;
-		Math::Ray r(origin, lowerLeftCorner + u*horizontal + v*vertical);
-		glm::vec4 color = glm::vec4(getColor(r), 1.f);
+		glm::vec4 c(0.f);
+		for (int s = 0; s < NumSamples; s++)
+		{
+			float u = float(x + Math::BaseRandom()) / width;
+			float v = float(y + Math::BaseRandom()) / height;
 
-        image[y*width + x] = color;
+			auto ray = camera.ray(u, v);
+			c += glm::vec4(color(hitables, ray), 1.f);
+		}
+        image[y*width + x] = c / float(NumSamples);
 	}
 }
 
@@ -149,10 +170,11 @@ void writeToPPM(std::vector<glm::vec4>& image, int width, int height)
 	fprintf(pFile, "P3\n");
 	fprintf(pFile, "%d %d\n", width, height);
 	fprintf(pFile, "255\n");
-	for (int y = 0; y < height; y++)
+	for (int y = height - 1; y >= 0; y--)
 	for (int x = 0; x < width; x++)
 	{
-		glm::ivec4 color = image[y*width + x] * 255.99f;
+		glm::vec3 source = glm::vec3(image[y*width + x]);
+		glm::ivec3 color = glm::pow(source, glm::vec3(1.f/2.2f)) * 255.99f;
 		fprintf(pFile, "%d %d %d\n", color.r, color.g, color.b);
 	}
 	fclose(pFile);
@@ -262,8 +284,13 @@ void RayTracer::update() noexcept
         std::vector<glm::vec4> image(width*height, glm::vec4(0.f));
         glm::vec3 sunDir = glm::vec3(0.0f, glm::cos(angle), -glm::sin(angle));
 
+		profiler::start(ProfilerTypeRender);
+
 		test(image, width, height);
 		writeToPPM(image, width, height);
+
+		profiler::stop(ProfilerTypeRender);
+		profiler::tick(ProfilerTypeRender, s_CpuTick, s_GpuTick);
 
         GraphicsTextureDesc colorDesc;
         colorDesc.setWidth(width);
@@ -304,9 +331,11 @@ void RayTracer::updateHUD() noexcept
 
 void RayTracer::render() noexcept
 {
+	gamecore::closeApplication();
+	return;
+
     bool bUpdate = m_Settings.bProfile || m_Settings.bUpdated;
 
-    profiler::start(ProfilerTypeRender);
     if (!m_Settings.bCPU && bUpdate)
     {
         auto& desc = m_ScreenColorTex->getGraphicsTextureDesc();
@@ -350,9 +379,6 @@ void RayTracer::render() noexcept
         m_ScreenTraingle.draw();
         glEnable(GL_DEPTH_TEST);
     }
-    profiler::stop(ProfilerTypeRender);
-    profiler::tick(ProfilerTypeRender, s_CpuTick, s_GpuTick);
-
 }
 
 void RayTracer::keyboardCallback(uint32_t key, bool isPressed) noexcept
