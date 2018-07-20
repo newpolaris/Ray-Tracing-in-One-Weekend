@@ -142,41 +142,80 @@ glm::vec3 color(const Math::Ray& ray, const HitableList& world, int depth)
 	return glm::mix(glm::vec3(1.f), glm::vec3(0.5f, 0.7f, 1.f), t);
 }
 
-void test(std::vector<glm::vec4>& image, int width, int height)
+HitableList randomScene()
 {
-	const int NumSamples = 100;
-	const float aperture = 2.f;
-	const float aspect = float(width)/height;
+	using Math::BaseRandom;
+
+	auto matGray = std::make_shared<Lambertian>(glm::vec3(0.5f, 0.5f, 0.5f));
 	auto matPink = std::make_shared<Lambertian>(glm::vec3(0.8f, 0.3f, 0.3f));
 	auto matGreen = std::make_shared<Lambertian>(glm::vec3(0.8f, 0.8f, 0.0f));
 	auto matIron = std::make_shared<Metal>(glm::vec3(0.8f, 0.6f, 0.2f), 0.3f);
 	auto matCopper = std::make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f), 1.f);
 	auto matGlass = std::make_shared<Dielectric>(1.5f);
 
+	HitableList world;
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000, matGray));
+
+	for (int a = -11; a < 11; a++)
+	for (int b = -11; b < 11; b++)
+	{
+		float choose = BaseRandom();
+		glm::vec3 center(a + 0.9f*BaseRandom(), 0.2, b + 0.9*BaseRandom());
+		if (glm::length(center - glm::vec3(4, 0.2, 0)) > 0.9)
+		{
+			if (choose < 0.8)
+			{
+				auto matRand = std::make_shared<Lambertian>(glm::vec3(BaseRandom()*BaseRandom(), BaseRandom()*BaseRandom(), BaseRandom()*BaseRandom()));
+				world.emplace_back(std::make_shared<Sphere>(center, 0.2f, matRand)); 
+			}
+			else if (choose < 0.95)
+			{
+				auto matRand = std::make_shared<Metal>(glm::vec3(0.5f*(1 + BaseRandom()), 0.5f*(1 + BaseRandom()), 0.5f*(1 + BaseRandom())), 0.5f*BaseRandom());
+				world.emplace_back(std::make_shared<Sphere>(center, 0.2f, matRand)); 
+			}
+			else
+			{
+				auto matGlass = std::make_shared<Dielectric>(1.5f);
+				world.emplace_back(std::make_shared<Sphere>(center, 0.2f, matGlass)); 
+			}
+		}
+	}
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(+0, 1, 0), 1.0f, matGlass));
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(-4, 1, 0), 1.0f, matGreen));
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(+4, 1, 0), 0.5f, matIron));
+
+	return world;
+}
+
+void test(std::vector<glm::vec4>& image, int width, int height)
+{
+	const int NumSamples = 100;
+	const float aperture = 1.f;
+	const float aspect = float(width)/height;
+
 	auto lookfrom = glm::vec3(3, 3, 2);
 	auto lookat = glm::vec3(0, 0, -1);
 	auto focusDistance = glm::length(lookfrom - lookat);
-	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 20.f, aspect, aperture, focusDistance);
+	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 40.f, aspect, aperture, focusDistance);
 
-	HitableList world;
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 0, -1), 0.5f, matPink));
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -100.2f, -1), 100.0f, matGreen));
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(1, 0, -1), 0.5f, matIron));
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(-1, 0, -1), 0.5f, matGlass));
+	HitableList world = randomScene();
 
 	for (int y = height - 1; y >= 0; y--)
-	for (int x = width - 1; x >= 0; x--)
 	{
-		glm::vec4 c(0.f);
-		for (int s = 0; s < NumSamples; s++)
+		for (int x = width - 1; x >= 0; x--)
 		{
-			float u = float(x + Math::BaseRandom()) / width;
-			float v = float(y + Math::BaseRandom()) / height;
+			glm::vec4 c(0.f);
+			for (int s = 0; s < NumSamples; s++)
+			{
+				float u = float(x + Math::BaseRandom()) / width;
+				float v = float(y + Math::BaseRandom()) / height;
 
-			auto ray = camera.ray(u, v);
-			c += glm::vec4(color(ray, world, 0), 1.f);
+				auto ray = camera.ray(u, v);
+				c += glm::vec4(color(ray, world, 0), 1.f);
+			}
+			image[y*width + x] = c / float(NumSamples);
 		}
-        image[y*width + x] = c / float(NumSamples);
+		printf("Process status: height %4d done\n", y);
 	}
 }
 
