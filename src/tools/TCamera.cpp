@@ -67,7 +67,7 @@ void TCamera::setProjectionParams(float fov, float aspect, float zNear, float zF
     m_zFar = zFar;
     m_aspect = aspect;
 
-    m_projectionMatrix = glm::perspective(m_fov, aspect, m_zNear, m_zFar);
+    m_projectionMatrix = glm::perspective(m_fov, m_aspect, m_zNear, m_zFar);
     m_viewProjMatrix = m_projectionMatrix * m_viewMatrix;
 }
 

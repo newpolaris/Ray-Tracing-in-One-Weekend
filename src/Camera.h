@@ -7,12 +7,19 @@ class Camera
 {
 public:
 	
-	Camera() 
-		: m_LowerLeftCorner(-2.f, -1.f, -1.f)
-		, m_Horizontal(4.f, 0.f, 0.f)
-		, m_Vertical(0.f, 2.f, 0.f)
-		, m_Origin(0.f)
+	Camera(float vfov, float aspect) 
+		: m_Fov(vfov)
+		, m_Aspect(aspect)
 	{
+		const float pi = glm::pi<float>();
+		const float theta = m_Fov * pi / 180.f; 
+		const float halfHeight = glm::tan(theta/2.f);
+		const float halfWidth = m_Aspect * halfHeight;
+
+		m_LowerLeftCorner = glm::vec3(-halfWidth, -halfHeight, -1.f);
+		m_Horizontal = glm::vec3(2*halfWidth, 0.f, 0.f);
+		m_Vertical = glm::vec3(0.f, 2*halfHeight, 0.f);
+		m_Origin = glm::vec3(0.f);
 	}
 
 	Math::Ray ray(float u, float v) const
@@ -23,6 +30,8 @@ public:
 
 private:
 
+	float m_Fov;
+	float m_Aspect;
 	glm::vec3 m_LowerLeftCorner;
 	glm::vec3 m_Horizontal;
 	glm::vec3 m_Vertical;

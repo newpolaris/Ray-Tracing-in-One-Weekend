@@ -151,12 +151,24 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 	auto matCopper = std::make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f), 1.f);
 	auto matGlass = std::make_shared<Dielectric>(1.5f);
 
-	Camera camera;
+	Camera camera(90.f, float(width)/height);
+
+#if 0
 	HitableList world;
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 0, -1), 0.5f, matPink));
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -100.2f, -1), 100.0f, matGreen));
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(1, 0, -1), 0.5f, matIron));
+
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(-1, 0, -1), 0.5f, matGlass));
+	// negative radius is used make normal points inward
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(-1, 0, -1), -0.475f, matGlass));
+#endif
+
+	float R = glm::cos(3.1415f/4);
+	HitableList world;
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(-R, 0, -1), R, matPink));
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(+R, 0, -1), R, matGreen));
+
 
 	for (int y = height - 1; y >= 0; y--)
 	for (int x = width - 1; x >= 0; x--)
