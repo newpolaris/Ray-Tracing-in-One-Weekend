@@ -149,13 +149,14 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 	auto matGreen = std::make_shared<Lambertian>(glm::vec3(0.8f, 0.8f, 0.0f));
 	auto matIron = std::make_shared<Metal>(glm::vec3(0.8f, 0.6f, 0.2f), 0.3f);
 	auto matCopper = std::make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f), 1.f);
+	auto matGlass = std::make_shared<Dielectric>(1.5f);
 
 	Camera camera;
 	HitableList world;
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 0, -1), 0.5f, matPink));
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -100.2f, -1), 100.0f, matGreen));
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(1, 0, -1), 0.5f, matIron));
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(-1, 0, -1), 0.5f, matCopper));
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(-1, 0, -1), 0.5f, matGlass));
 
 	for (int y = height - 1; y >= 0; y--)
 	for (int x = width - 1; x >= 0; x--)

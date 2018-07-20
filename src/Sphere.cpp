@@ -4,8 +4,6 @@ namespace
 {
 	bool hitSphere(glm::vec3 pos, glm::vec3 dir, glm::vec3 c, float r, glm::vec2& t)
 	{
-		assert(r > 0.f);
-
 		glm::vec3 tc = c - pos;
 
 		float l = glm::dot(tc, dir);
