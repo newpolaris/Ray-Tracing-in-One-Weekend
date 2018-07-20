@@ -5,5 +5,6 @@
 namespace Math 
 {
 	float BaseRandom();
+	glm::vec2 randomUnitDisk();
 	glm::vec3 randomUnitSphere();
 };

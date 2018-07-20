@@ -145,6 +145,7 @@ glm::vec3 color(const Math::Ray& ray, const HitableList& world, int depth)
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
 	const int NumSamples = 100;
+	const float aperture = 2.f;
 	const float aspect = float(width)/height;
 	auto matPink = std::make_shared<Lambertian>(glm::vec3(0.8f, 0.3f, 0.3f));
 	auto matGreen = std::make_shared<Lambertian>(glm::vec3(0.8f, 0.8f, 0.0f));
@@ -152,7 +153,10 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 	auto matCopper = std::make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f), 1.f);
 	auto matGlass = std::make_shared<Dielectric>(1.5f);
 
-	Camera camera(glm::vec3(-2, 2, 1), glm::vec3(0, 0, -1), glm::vec3(0, 1, 0), 40.f, aspect);
+	auto lookfrom = glm::vec3(3, 3, 2);
+	auto lookat = glm::vec3(0, 0, -1);
+	auto focusDistance = glm::length(lookfrom - lookat);
+	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 20.f, aspect, aperture, focusDistance);
 
 	HitableList world;
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 0, -1), 0.5f, matPink));

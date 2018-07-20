@@ -1,9 +1,11 @@
 #include "Camera.h"
 #include <glm/gtc/type_ptr.hpp> 
+#include <Math/Random.h>
 
-Camera::Camera(const glm::vec3& lookfrom, const glm::vec3& lookat, const glm::vec3& vup, float vfov, float aspect)
+Camera::Camera(const glm::vec3& lookfrom, const glm::vec3& lookat, const glm::vec3& vup, float vfov, float aspect, float aperture, float focusDistance)
 	: m_Fov(vfov)
 	, m_Aspect(aspect)
+	, m_LensRadius(aperture/2)
 {
 	const float pi = glm::pi<float>();
 	const float theta = m_Fov * pi / 180.f; 
@@ -16,13 +18,22 @@ Camera::Camera(const glm::vec3& lookfrom, const glm::vec3& lookat, const glm::ve
 	glm::vec3 u = glm::normalize(glm::cross(vup, w));
 	glm::vec3 v = glm::cross(w, u);
 
-	m_LowerLeftCorner = m_Origin - (u * halfWidth + v * halfHeight + w);
-	m_Horizontal = 2.f * u * halfWidth;
-	m_Vertical = 2.f * v * halfHeight;
+	m_LowerLeftCorner = -(u * halfWidth + v * halfHeight + w) * focusDistance;
+	m_Horizontal = 2.f * u * halfWidth * focusDistance;
+	m_Vertical = 2.f * v * halfHeight * focusDistance;
+
+	m_Back = w;
+	m_Right = u;
+	m_Up = v;
 }
 
-Math::Ray Camera::ray(float u, float v) const
+Math::Ray Camera::ray(float s, float t) const
 {
-	glm::vec3 dir = glm::normalize(m_LowerLeftCorner + u*m_Horizontal + v*m_Vertical - m_Origin);
-	return Math::Ray(m_Origin, dir);
+	glm::vec2 rd = m_LensRadius * Math::randomUnitDisk();
+	// ray start offset, that affect lens size  
+	glm::vec3 offset = m_Right * rd.x + m_Up * rd.y;
+	// lens rays are focused at 'focusDistance' virtual plane
+	glm::vec3 dir = glm::normalize(m_LowerLeftCorner + s*m_Horizontal + t*m_Vertical - offset);
+
+	return Math::Ray(m_Origin + offset, dir);
 }
