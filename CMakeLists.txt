@@ -67,6 +67,10 @@ file(GLOB_RECURSE SRC src/*)
 
 set(UNITTEST_SRC 
 	test/aabb.cpp
+	test/string.cpp
+	src/Math/AABB.cpp
+	src/Math/Ray.cpp
+	src/Math/Random.cpp
 )
 
 add_executable(${APP_TARGET} ${SRC})

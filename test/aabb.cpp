@@ -1,12 +1,9 @@
 #include <gtest/gtest.h>
-#include <string>
+#include <Math/AABB.h>
 
-const char *actualValTrue  = "hello gtest";
-const char *actualValFalse = "hello world";
-const char *expectVal      = "hello gtest";
-TEST(StrCompare, CStrEqual) {
-	EXPECT_STREQ(expectVal, actualValTrue);
-}
-TEST(StrCompare, CStrNotEqual) {
-	EXPECT_STREQ(expectVal, actualValFalse);
+TEST(AABB, HitBasic) 
+{
+	Math::AABB aabb(glm::vec3(1.f), glm::vec3(3.f));
+	Math::Ray ray(glm::vec3(0.f), glm::normalize(glm::vec3(1.f)));
+	EXPECT_TRUE(aabb.hit(ray, 0.f, 1000.f));
 }
