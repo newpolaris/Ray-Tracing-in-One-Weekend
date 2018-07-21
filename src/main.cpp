@@ -146,6 +146,8 @@ HitableList randomScene()
 {
 	using Math::BaseRandom;
 
+	const int NumGrid = 5;
+
 	auto matGray = std::make_shared<Lambertian>(glm::vec3(0.5f, 0.5f, 0.5f));
 	auto matPink = std::make_shared<Lambertian>(glm::vec3(0.8f, 0.3f, 0.3f));
 	auto matGreen = std::make_shared<Lambertian>(glm::vec3(0.8f, 0.8f, 0.0f));
@@ -156,8 +158,8 @@ HitableList randomScene()
 	HitableList world;
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000, matGray));
 
-	for (int a = -11; a < 11; a++)
-	for (int b = -11; b < 11; b++)
+	for (int a = -NumGrid; a < NumGrid; a++)
+	for (int b = -NumGrid; b < NumGrid; b++)
 	{
 		float choose = BaseRandom();
 		glm::vec3 center(a + 0.9f*BaseRandom(), 0.2, b + 0.9*BaseRandom());
@@ -190,13 +192,13 @@ HitableList randomScene()
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
 	const int NumSamples = 100;
-	const float aperture = 1.f;
+	const float aperture = 0.2f;
 	const float aspect = float(width)/height;
 
-	auto lookfrom = glm::vec3(3, 3, 2);
-	auto lookat = glm::vec3(0, 0, -1);
+	auto lookfrom = glm::vec3(13, 2, 3);
+	auto lookat = glm::vec3(0, 0, 0);
 	auto focusDistance = glm::length(lookfrom - lookat);
-	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 40.f, aspect, aperture, focusDistance);
+	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 20.f, aspect, aperture, focusDistance);
 
 	HitableList world = randomScene();
 
@@ -335,6 +337,10 @@ void RayTracer::update() noexcept
     m_Settings.bUpdated = (m_Settings.bUiChanged || bCameraUpdated || bResized);
     if (m_Settings.bUpdated && m_Settings.bCPU)
     {
+#if 0
+		width = 200;
+		height = 100;
+#endif
         const float angle = glm::radians(m_Settings.angle);
         std::vector<glm::vec4> image(width*height, glm::vec4(0.f));
         glm::vec3 sunDir = glm::vec3(0.0f, glm::cos(angle), -glm::sin(angle));
