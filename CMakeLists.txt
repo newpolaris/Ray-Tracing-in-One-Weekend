@@ -73,8 +73,7 @@ add_executable(${APP_TARGET} ${SRC})
 target_link_libraries(${APP_TARGET} glsw ${ALL_LIBS})
 
 add_executable(${UNITTEST_TARGET} ${UNITTEST_SRC})
-# target_link_libraries(${UNITTEST_TARGET} ${ALL_LIBS} gtest gtest_main)
-target_link_libraries(${UNITTEST_TARGET} ${ALL_LIBS})
+target_link_libraries(${UNITTEST_TARGET} ${ALL_LIBS} gtest gtest_main)
 add_test(${UNITTEST_TARGET} ${UNITTEST_TARGET})
 
 # Xcode and Visual working directories
