@@ -3,6 +3,7 @@ cmake_minimum_required (VERSION 3.0)
 project (RayTracer)
 
 set(APP_TARGET RayTracer.app)
+set(UNITTEST_TARGET UnitTest.app)
 
 #if( APPLE )
     set(CMAKE_CXX_STANDARD 14)
@@ -13,9 +14,10 @@ find_package(OpenGL REQUIRED)
 
 set(UseGLI TRUE)
 set(UseZlib TRUE)
+set(UseGTest TRUE)
 
 # Compile external dependencies 
-add_subdirectory (external)
+add_subdirectory(external)
 
 # On Visual 2005 and above, this module can set the debug working directory
 cmake_policy(SET CMP0026 OLD)
@@ -58,14 +60,26 @@ add_definitions(
 	-D_CRT_SECURE_NO_WARNINGS
 )
 
-file( GLOB GLSW external/glsw/*.c external/glsw/*.h )
-add_library( glsw ${GLSW} )
+file(GLOB GLSW external/glsw/*.c external/glsw/*.h)
+add_library(glsw ${GLSW})
 
-file( GLOB_RECURSE SRC src/* )
+file(GLOB_RECURSE SRC src/*)
+
+set(UNITTEST_SRC 
+	test/aabb.cpp
+)
 
 add_executable(${APP_TARGET} ${SRC})
 target_link_libraries(${APP_TARGET} glsw ${ALL_LIBS})
 
+add_executable(${UNITTEST_TARGET} ${UNITTEST_SRC})
+# target_link_libraries(${UNITTEST_TARGET} ${ALL_LIBS} gtest gtest_main)
+target_link_libraries(${UNITTEST_TARGET} ${ALL_LIBS})
+add_test(${UNITTEST_TARGET} ${UNITTEST_TARGET})
+
 # Xcode and Visual working directories
 set_target_properties(${APP_TARGET} PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/")
 create_target_launcher(${APP_TARGET} WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/")
+
+set_target_properties(${UNITTEST_TARGET} PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/")
+create_target_launcher(${UNITTEST_TARGET} WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/")

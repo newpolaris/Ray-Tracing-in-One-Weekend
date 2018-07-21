@@ -152,3 +152,10 @@ if (UseZlib)
 	set(SKIP_INSTALL_ALL FALSE)
 	add_subdirectory(zlib)
 endif(UseZlib)
+
+### GTest ###
+if (UseGTest)
+	add_subdirectory(googletest-1.8.0)
+	enable_testing()
+	include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+endif(UseGTest)
