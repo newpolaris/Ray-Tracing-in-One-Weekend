@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <stdio.h>
 #include "Mesh.h"
+#include <BasicMesh.h>
 
 TCamera::TCamera()
     : m_PrevViewMatrix(1.f)

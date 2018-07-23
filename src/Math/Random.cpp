@@ -1,8 +1,9 @@
 #include "Random.h"
+#include <cmath>
 
 float Math::BaseRandom()
 {
-	return drand48();
+    return float(rand()) / (RAND_MAX + 1.f);
 }
 
 glm::vec2 Math::randomUnitDisk()

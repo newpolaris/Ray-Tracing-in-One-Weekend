@@ -35,7 +35,7 @@ bool AABB::hit(const Ray& r, float tmin, float tmax) const
 		float t1 = std::max(a, b);
 
 		tmin = std::max(t0, tmin);
-		tmax = std::max(t1, tmax);
+		tmax = std::min(t1, tmax);
 
 		if (tmax <= tmin)
 			return false;
