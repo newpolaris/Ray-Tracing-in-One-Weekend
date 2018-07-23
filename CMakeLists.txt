@@ -2,6 +2,7 @@
 cmake_minimum_required (VERSION 3.0)
 project (RayTracer)
 
+set(gtest_force_shared_crt ON CACHE BOOL "Always use msvcrt.dll")
 set(APP_TARGET RayTracer.app)
 set(UNITTEST_TARGET UnitTest.app)
 

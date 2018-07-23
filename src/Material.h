@@ -7,7 +7,7 @@
 #include <Math/Scattering.h>
 #include <Hitable.h>
 
-class HitRecord;
+struct HitRecord;
 
 class Material
 {

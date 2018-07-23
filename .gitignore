@@ -19,3 +19,5 @@ imgui.ini
 /external/FreeImage/*.cmake
 /external/glfw-3.1.2/src/*.cmake
 /external/gli/*.cmake
+/external/zlib/zconf.h
+/external/zlib/zconf.h.included

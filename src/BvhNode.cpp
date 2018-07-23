@@ -22,9 +22,7 @@ BvhNode::BvhNode(const HitableIter& begin, const HitableIter& end, float t0, flo
 				auto bB = b->boundingBox(t0, t1, right);
 				if (!bA || !bB)
 					std::cerr << "No bounding box in BvhNode constructor\n" << std::endl;
-				if (left.min()[axis] - right.min()[axis] < 0.f)
-					return -1;
-				return 1;
+				return left.min()[axis] < right.min()[axis];
 			});
 
 	auto n = std::distance(begin, end);
