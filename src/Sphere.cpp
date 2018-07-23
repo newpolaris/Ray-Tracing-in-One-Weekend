@@ -35,3 +35,10 @@ bool Sphere::hit(const Math::Ray& r, float tMin, float tMax, HitRecord& rec) con
 	}
 	return false;
 }
+
+bool Sphere::boundingBox(float /*t0*/, float /*t1*/, Math::AABB& box) const
+{
+	box = Math::AABB(m_Center - glm::vec3(m_Radius), m_Center + glm::vec3(m_Radius));
+
+	return true;
+}

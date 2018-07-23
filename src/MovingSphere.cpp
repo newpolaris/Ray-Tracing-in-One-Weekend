@@ -41,6 +41,17 @@ bool MovingSphere::hit(const Math::Ray& r, float tMin, float tMax, HitRecord& re
 
 }
 
+bool MovingSphere::boundingBox(float t0, float t1, Math::AABB& box) const
+{
+	auto c0 = center(t0);
+	auto c1 = center(t1);
+	auto minC = glm::min(c0, c1);
+	auto maxC = glm::max(c0, c1);
+	box = Math::AABB(minC - glm::vec3(m_Radius), maxC + glm::vec3(m_Radius));
+
+	return true;
+}
+
 glm::vec3 MovingSphere::center(float time) const
 {
 	return m_Center0 + ((time - m_Time0) / (m_Time1 - m_Time0))*(m_Center1 - m_Center0);

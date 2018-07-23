@@ -37,6 +37,8 @@
 #include <Mesh.h>
 #include <BasicMesh.h>
 #include <MovingSphere.h>
+#include <HitableSet.h>
+#include <BvhNode.h>
 
 enum ProfilerType { ProfilerTypeRender = 0 };
 
@@ -122,14 +124,14 @@ glm::mat4 jitterProjMatrix(const glm::mat4& proj, int sampleCount, float jitterA
     return ret;
 }
 
-glm::vec3 color(const Math::Ray& ray, const HitableList& world, int depth) 
+glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth) 
 {
 	const float RAY_MIN = 1e-4f;
 	const float RAY_MAX = 1e8f;
 
 	HitRecord rec = { 0 };
 
-	if (hit(world.begin(), world.end(), ray, RAY_MIN, RAY_MAX, rec)) 
+	if (world->hit(ray, RAY_MIN, RAY_MAX, rec)) 
 	{
 		Math::Ray scattered(glm::vec3(0.f), glm::vec3(0.f));
 		glm::vec3 attenuation;
@@ -163,17 +165,17 @@ HitableList randomScene()
 	for (int b = -NumGrid; b < NumGrid; b++)
 	{
 		float choose = BaseRandom();
-		glm::vec3 center(a + 0.9f*BaseRandom(), 0.2, b + 0.9*BaseRandom());
-		if (glm::length(center - glm::vec3(4, 0.2, 0)) > 0.9)
+		glm::vec3 center(a + 0.9f*BaseRandom(), 0.2f, b + 0.9f*BaseRandom());
+		if (glm::length(center - glm::vec3(4, 0.2f, 0)) > 0.9f)
 		{
-			if (choose < 0.8)
+			if (choose < 0.8f)
 			{
 				auto matRand = std::make_shared<Lambertian>(glm::vec3(BaseRandom()*BaseRandom(), BaseRandom()*BaseRandom(), BaseRandom()*BaseRandom()));
 				auto center0 = center;
 				auto center1 = center + glm::vec3(0.f, 0.5f*BaseRandom(), 0.f);
 				world.emplace_back(std::make_shared<MovingSphere>(center0, center1, 0.f, 1.f, 0.2f, matRand)); 
 			}
-			else if (choose < 0.95)
+			else if (choose < 0.95f)
 			{
 				auto matRand = std::make_shared<Metal>(glm::vec3(0.5f*(1 + BaseRandom()), 0.5f*(1 + BaseRandom()), 0.5f*(1 + BaseRandom())), 0.5f*BaseRandom());
 				world.emplace_back(std::make_shared<Sphere>(center, 0.2f, matRand)); 
@@ -203,7 +205,8 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 	auto focusDistance = glm::length(lookfrom - lookat);
 	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 20.f, aspect, aperture, focusDistance, 0.f, 1.0f);
 
-	HitableList world = randomScene();
+	HitableList scene = randomScene();
+	auto world = std::make_shared<BvhNode>(scene.begin(), scene.end(), 0.f, 1.f);
 
 	for (int y = height - 1; y >= 0; y--)
 	{

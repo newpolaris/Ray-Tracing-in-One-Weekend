@@ -9,6 +9,7 @@ class AABB
 {
 public:
 
+	AABB();
 	AABB(const glm::vec3& a, const glm::vec3& b);
 
 	glm::vec3 min() const;
@@ -22,4 +23,5 @@ private:
 	glm::vec3 m_Max;
 };
 
+	AABB Union(const AABB& b0, const AABB& b1);
 }

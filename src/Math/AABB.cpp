@@ -2,7 +2,21 @@
 #include <Math/Ray.h>
 #include <algorithm>
 
+namespace Math
+{
+	AABB Union(const AABB& b0, const AABB& b1)
+	{
+		glm::vec3 lower = glm::min(b0.min(), b1.min());
+		glm::vec3 upper = glm::max(b0.max(), b1.max());
+		return AABB(lower, upper);
+	}
+}
+
 using namespace Math;
+
+AABB::AABB()
+{
+}
 
 AABB::AABB(const glm::vec3& a, const glm::vec3& b)
 	: m_Min(a)
