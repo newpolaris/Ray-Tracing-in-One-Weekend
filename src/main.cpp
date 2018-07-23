@@ -36,6 +36,7 @@
 #include <Material.h>
 #include <Mesh.h>
 #include <BasicMesh.h>
+#include <MovingSphere.h>
 
 enum ProfilerType { ProfilerTypeRender = 0 };
 
@@ -130,7 +131,7 @@ glm::vec3 color(const Math::Ray& ray, const HitableList& world, int depth)
 
 	if (hit(world.begin(), world.end(), ray, RAY_MIN, RAY_MAX, rec)) 
 	{
-		Math::Ray scattered;
+		Math::Ray scattered(glm::vec3(0.f), glm::vec3(0.f));
 		glm::vec3 attenuation;
 		if (depth < 50 && rec.material->scatter(ray, rec, attenuation, scattered))
 			return attenuation*color(scattered, world, depth + 1);
@@ -168,7 +169,9 @@ HitableList randomScene()
 			if (choose < 0.8)
 			{
 				auto matRand = std::make_shared<Lambertian>(glm::vec3(BaseRandom()*BaseRandom(), BaseRandom()*BaseRandom(), BaseRandom()*BaseRandom()));
-				world.emplace_back(std::make_shared<Sphere>(center, 0.2f, matRand)); 
+				auto center0 = center;
+				auto center1 = center + glm::vec3(0.f, 0.5f*BaseRandom(), 0.f);
+				world.emplace_back(std::make_shared<MovingSphere>(center0, center1, 0.f, 1.f, 0.2f, matRand)); 
 			}
 			else if (choose < 0.95)
 			{
@@ -198,7 +201,7 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 	auto lookfrom = glm::vec3(13, 2, 3);
 	auto lookat = glm::vec3(0, 0, 0);
 	auto focusDistance = glm::length(lookfrom - lookat);
-	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 20.f, aspect, aperture, focusDistance);
+	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 20.f, aspect, aperture, focusDistance, 0.f, 1.0f);
 
 	HitableList world = randomScene();
 

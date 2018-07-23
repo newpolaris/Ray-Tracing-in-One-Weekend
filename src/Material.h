@@ -4,6 +4,7 @@
 #include <Types.h>
 #include <Math/Ray.h>
 #include <Math/Random.h>
+#include <Math/Scattering.h>
 #include <Hitable.h>
 
 class HitRecord;
@@ -27,7 +28,7 @@ public:
 		glm::vec3 target = rec.position + rec.normal + Math::randomUnitSphere();
 		glm::vec3 dir = glm::normalize(target - rec.position);
 
-		scattered = Math::Ray(rec.position, dir);
+		scattered = Math::Ray(rec.position, dir, in.time());
 		attenuation = m_Albedo;
 
 		return true;
@@ -52,7 +53,7 @@ public:
 		glm::vec3 reflected = glm::reflect(in.direction(), rec.normal);
 		if (m_Fuzz > 0.f)
 			reflected = glm::normalize(reflected + m_Fuzz*Math::randomUnitSphere());
-		scattered = Math::Ray(rec.position, reflected);
+		scattered = Math::Ray(rec.position, reflected, in.time());
 		attenuation = m_Albedo;
 
 		return glm::dot(scattered.direction(), rec.normal) > 0;
@@ -100,9 +101,9 @@ public:
 			reflectProbability = 1.f;
 
 		if (Math::BaseRandom() < reflectProbability) 
-			scattered = Math::Ray(rec.position, reflected);
+			scattered = Math::Ray(rec.position, reflected, in.time());
 		else
-			scattered = Math::Ray(rec.position, refracted);
+			scattered = Math::Ray(rec.position, refracted, in.time());
 		return true;
 	}
 

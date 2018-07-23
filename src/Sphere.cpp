@@ -1,24 +1,5 @@
 #include "Sphere.h"
-
-namespace 
-{
-	bool hitSphere(glm::vec3 pos, glm::vec3 dir, glm::vec3 c, float r, glm::vec2& t)
-	{
-		glm::vec3 tc = c - pos;
-
-		float l = glm::dot(tc, dir);
-		float d = l*l - glm::dot(tc, tc) + r*r;
-		if (d < 0) return false;
-		float sl = glm::sqrt(d);
-
-		t = glm::vec2(l - sl, l + sl);
-		return true;
-	}
-}
-
-Sphere::Sphere() noexcept
-{
-}
+#include <Math/Intersection.h>
 
 Sphere::Sphere(const glm::vec3& center, float radius, const MaterialPtr& material) noexcept
 	: m_Center(center)
@@ -31,7 +12,7 @@ bool Sphere::hit(const Math::Ray& r, float tMin, float tMax, HitRecord& rec) con
 {
 	glm::vec2 t(0.f);
 
-	bool bHit = hitSphere(r.origin(), r.direction(), m_Center, m_Radius, t);
+	bool bHit = Math::hitSphere(r.origin(), r.direction(), m_Center, m_Radius, t);
 	if (!bHit) return false;
 
 	if (t.x > tMin && t.x < tMax)
