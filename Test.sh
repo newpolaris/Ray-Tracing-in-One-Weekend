@@ -1,1 +1,1 @@
-cmake -DCMAKE_BUILD_TYPE=Debug -Bbuild -H. && make -j4 -Cbuild && ./build/UnitTest.app
+cmake -DCMAKE_BUILD_TYPE=Debug -Bdebug -H. && make -j4 -Cdebug && ./debug/UnitTest.app

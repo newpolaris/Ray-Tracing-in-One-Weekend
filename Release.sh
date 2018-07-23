@@ -1,1 +1,1 @@
-cmake -DCMAKE_BUILD_TYPE=Release -Bbuild -H. && make -j4 -Cbuild && ./build/RayTracer.app
+cmake -DCMAKE_BUILD_TYPE=Release -Brelease -H. && make -j4 -Crelease && ./release/RayTracer.app

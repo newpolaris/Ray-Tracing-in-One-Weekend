@@ -12,6 +12,9 @@ external/FreeImage/Release/
 external/FreeImage/FreeImage.dir/
 external/FreeImage/FreeImageTest.dir/
 build/
+debug/
+test/
+release/
 imgui.ini
 /external/FreeImage/*.cmake
 /external/glfw-3.1.2/src/*.cmake

@@ -28,15 +28,14 @@ bool AABB::hit(const Ray& r, float tmin, float tmax) const
 
 	for (int i = 0; i < 3; i++)
 	{
-		auto a = (m_Min[i] - o[i]) / d[i];
-		auto b = (m_Max[i] - o[i]) / d[i];
+		auto invD = 1.f / d[i];
+		auto t0  = (m_Min[i] - o[i]) * invD;
+		auto t1 = (m_Max[i] - o[i]) * invD;
+		if (invD < 0.0f)
+			std::swap(t0, t1);
 
-		float t0 = std::min(a, b);
-		float t1 = std::max(a, b);
-
-		tmin = std::max(t0, tmin);
-		tmax = std::min(t1, tmax);
-
+		tmin = t0 > tmin ? t0 : tmin;
+		tmax = t1 < tmax ? t1 : tmax;
 		if (tmax <= tmin)
 			return false;
 	}
