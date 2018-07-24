@@ -39,6 +39,8 @@
 #include <MovingSphere.h>
 #include <HitableSet.h>
 #include <BvhNode.h>
+#include <ConstantTexture.h>
+#include <CheckerTexture.h>
 
 enum ProfilerType { ProfilerTypeRender = 0 };
 
@@ -151,15 +153,18 @@ HitableList randomScene()
 
 	const int NumGrid = 5;
 
-	auto matGray = std::make_shared<Lambertian>(glm::vec3(0.5f, 0.5f, 0.5f));
-	auto matPink = std::make_shared<Lambertian>(glm::vec3(0.8f, 0.3f, 0.3f));
-	auto matGreen = std::make_shared<Lambertian>(glm::vec3(0.8f, 0.8f, 0.0f));
-	auto matIron = std::make_shared<Metal>(glm::vec3(0.8f, 0.6f, 0.2f), 0.3f);
-	auto matCopper = std::make_shared<Metal>(glm::vec3(0.8f, 0.8f, 0.8f), 1.f);
+    auto texChecker = std::make_shared<CheckerTexture>(
+        std::make_shared<ConstantTexture>(glm::vec3(0.2f, 0.3f, 0.1f)),
+        std::make_shared<ConstantTexture>(glm::vec3(0.9f, 0.9f, 0.9f)));
+	auto matChecker = std::make_shared<Lambertian>(texChecker);
+	auto texGreen = std::make_shared<ConstantTexture>(glm::vec3(0.8f, 0.8f, 0.0f));
+	auto matGreen = std::make_shared<Lambertian>(texGreen);
+    auto texIron = std::make_shared<ConstantTexture>(glm::vec3(0.8f, 0.6f, 0.2f));
+	auto matIron = std::make_shared<Metal>(texIron, 0.3f);
 	auto matGlass = std::make_shared<Dielectric>(1.5f);
 
 	HitableList world;
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000, matGray));
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000.f, matChecker));
 
 	for (int a = -NumGrid; a < NumGrid; a++)
 	for (int b = -NumGrid; b < NumGrid; b++)
@@ -170,14 +175,16 @@ HitableList randomScene()
 		{
 			if (choose < 0.8f)
 			{
-				auto matRand = std::make_shared<Lambertian>(glm::vec3(BaseRandom()*BaseRandom(), BaseRandom()*BaseRandom(), BaseRandom()*BaseRandom()));
+                auto texRand = std::make_shared<ConstantTexture>(glm::vec3(BaseRandom()*BaseRandom(), BaseRandom()*BaseRandom(), BaseRandom()*BaseRandom()));
+				auto matRand = std::make_shared<Lambertian>(texRand);
 				auto center0 = center;
 				auto center1 = center + glm::vec3(0.f, 0.5f*BaseRandom(), 0.f);
 				world.emplace_back(std::make_shared<MovingSphere>(center0, center1, 0.f, 1.f, 0.2f, matRand)); 
 			}
 			else if (choose < 0.95f)
 			{
-				auto matRand = std::make_shared<Metal>(glm::vec3(0.5f*(1 + BaseRandom()), 0.5f*(1 + BaseRandom()), 0.5f*(1 + BaseRandom())), 0.5f*BaseRandom());
+                auto texRand = std::make_shared<ConstantTexture>(glm::vec3(0.5f*(1 + BaseRandom()), 0.5f*(1 + BaseRandom()), 0.5f*(1 + BaseRandom())));
+				auto matRand = std::make_shared<Metal>(texRand, 0.5f*BaseRandom());
 				world.emplace_back(std::make_shared<Sphere>(center, 0.2f, matRand)); 
 			}
 			else
