@@ -11,6 +11,10 @@ MovingSphere::MovingSphere(const glm::vec3& c0, const glm::vec3& c1, float t0, f
 {
 }
 
+MovingSphere::~MovingSphere()
+{
+}
+
 bool MovingSphere::hit(const Math::Ray& r, float tMin, float tMax, HitRecord& rec) const
 {
 	glm::vec2 t(0.f);

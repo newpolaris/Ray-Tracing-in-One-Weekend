@@ -9,6 +9,8 @@ public:
 
 	Sphere(const glm::vec3& center, float radius, const MaterialPtr& material) noexcept;
 
+	virtual ~Sphere();
+
 	virtual bool hit(const Math::Ray& r, float tMin, float tMax, HitRecord& rec) const override;
 	virtual bool boundingBox(float t0, float t1, Math::AABB& box) const override;
 

@@ -8,6 +8,10 @@ Sphere::Sphere(const glm::vec3& center, float radius, const MaterialPtr& materia
 {
 }
 
+Sphere::~Sphere()
+{
+}
+
 bool Sphere::hit(const Math::Ray& r, float tMin, float tMax, HitRecord& rec) const 
 {
 	glm::vec2 t(0.f);

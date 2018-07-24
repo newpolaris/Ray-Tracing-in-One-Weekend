@@ -12,6 +12,8 @@ struct HitRecord;
 class Material
 {
 public:
+
+	virtual ~Material();
 	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const = 0;
 };
 
@@ -22,6 +24,8 @@ public:
 	Lambertian(const TexturePtr& albedo) : m_Albedo(albedo)
 	{
 	}
+
+	virtual ~Lambertian();
 
     virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const override;
 
@@ -40,6 +44,8 @@ public:
 		assert(fuzz <= 1.f);
 	}
 
+	virtual ~Metal();
+
 	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const override;
 
 private:
@@ -53,6 +59,8 @@ class Dielectric : public Material
 public:
 
 	Dielectric(float refractIndex) : m_RefractIndex(refractIndex) {}
+
+	virtual ~Dielectric();
 
 	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const override
 	{
