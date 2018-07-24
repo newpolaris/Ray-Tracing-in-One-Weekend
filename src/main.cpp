@@ -30,6 +30,7 @@
 #include <GameCore.h>
 #include <Math/Ray.h>
 #include <Math/Random.h>
+#include <Math/Perlin.h>
 #include "Atmosphere.h"
 #include "Sphere.h"
 #include "Camera.h"
@@ -40,6 +41,7 @@
 #include <HitableSet.h>
 #include <BvhNode.h>
 #include <ConstantTexture.h>
+#include <NoiseTexture.h>
 #include <CheckerTexture.h>
 
 enum ProfilerType { ProfilerTypeRender = 0 };
@@ -147,56 +149,18 @@ glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth)
 	return glm::mix(glm::vec3(1.f), glm::vec3(0.5f, 0.7f, 1.f), t);
 }
 
-HitableList randomScene()
+HitableList perlinSpheres()
 {
 	using Math::BaseRandom;
 
 	const int NumGrid = 5;
 
-    auto texChecker = std::make_shared<CheckerTexture>(
-        std::make_shared<ConstantTexture>(glm::vec3(0.2f, 0.3f, 0.1f)),
-        std::make_shared<ConstantTexture>(glm::vec3(0.9f, 0.9f, 0.9f)));
-	auto matChecker = std::make_shared<Lambertian>(texChecker);
-	auto texGreen = std::make_shared<ConstantTexture>(glm::vec3(0.8f, 0.8f, 0.0f));
-	auto matGreen = std::make_shared<Lambertian>(texGreen);
-    auto texIron = std::make_shared<ConstantTexture>(glm::vec3(0.8f, 0.6f, 0.2f));
-	auto matIron = std::make_shared<Metal>(texIron, 0.3f);
-	auto matGlass = std::make_shared<Dielectric>(1.5f);
+    auto texPerlinNoise = std::make_shared<NoiseTexture>();
+	auto matPerlinNoise = std::make_shared<Lambertian>(texPerlinNoise);
 
 	HitableList world;
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000.f, matChecker));
-
-	for (int a = -NumGrid; a < NumGrid; a++)
-	for (int b = -NumGrid; b < NumGrid; b++)
-	{
-		float choose = BaseRandom();
-		glm::vec3 center(a + 0.9f*BaseRandom(), 0.2f, b + 0.9f*BaseRandom());
-		if (glm::length(center - glm::vec3(4, 0.2f, 0)) > 0.9f)
-		{
-			if (choose < 0.8f)
-			{
-                auto texRand = std::make_shared<ConstantTexture>(glm::vec3(BaseRandom()*BaseRandom(), BaseRandom()*BaseRandom(), BaseRandom()*BaseRandom()));
-				auto matRand = std::make_shared<Lambertian>(texRand);
-				auto center0 = center;
-				auto center1 = center + glm::vec3(0.f, 0.5f*BaseRandom(), 0.f);
-				world.emplace_back(std::make_shared<MovingSphere>(center0, center1, 0.f, 1.f, 0.2f, matRand)); 
-			}
-			else if (choose < 0.95f)
-			{
-                auto texRand = std::make_shared<ConstantTexture>(glm::vec3(0.5f*(1 + BaseRandom()), 0.5f*(1 + BaseRandom()), 0.5f*(1 + BaseRandom())));
-				auto matRand = std::make_shared<Metal>(texRand, 0.5f*BaseRandom());
-				world.emplace_back(std::make_shared<Sphere>(center, 0.2f, matRand)); 
-			}
-			else
-			{
-				auto matGlass = std::make_shared<Dielectric>(1.5f);
-				world.emplace_back(std::make_shared<Sphere>(center, 0.2f, matGlass)); 
-			}
-		}
-	}
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(+0, 1, 0), 1.0f, matGlass));
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(-4, 1, 0), 1.0f, matGreen));
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(+4, 1, 0), 0.5f, matIron));
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000.f, matPerlinNoise));
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 2, 0), 2.0f, matPerlinNoise));
 
 	return world;
 }
@@ -204,7 +168,7 @@ HitableList randomScene()
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
 	const int NumSamples = 100;
-	const float aperture = 0.2f;
+	const float aperture = 0.1f;
 	const float aspect = float(width)/height;
 
 	auto lookfrom = glm::vec3(13, 2, 3);
@@ -212,7 +176,7 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 	auto focusDistance = glm::length(lookfrom - lookat);
 	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 20.f, aspect, aperture, focusDistance, 0.f, 1.0f);
 
-	HitableList scene = randomScene();
+	HitableList scene = perlinSpheres();
 	auto world = std::make_shared<BvhNode>(scene.begin(), scene.end(), 0.f, 1.f);
 
 	for (int y = height - 1; y >= 0; y--)
@@ -296,6 +260,7 @@ RayTracer::~RayTracer() noexcept
 void RayTracer::startup() noexcept
 {
 	profiler::initialize();
+	perlin::initialize();
 
 	m_Camera.setViewParams(glm::vec3(2.0f, 5.0f, 15.0f), glm::vec3(2.0f, 0.0f, 0.0f));
 	m_Camera.setMoveCoefficient(0.35f);
