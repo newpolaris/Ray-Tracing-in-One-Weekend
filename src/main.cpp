@@ -43,6 +43,7 @@
 #include <ConstantTexture.h>
 #include <NoiseTexture.h>
 #include <CheckerTexture.h>
+#include <ImageTexture.h>
 
 enum ProfilerType { ProfilerTypeRender = 0 };
 
@@ -155,7 +156,9 @@ HitableList perlinSpheres()
 
 	const int NumGrid = 5;
 
+	auto texEarth = std::make_shared<ImageTexture>("resources/Earth.jpg");
     auto texPerlinNoise = std::make_shared<NoiseTexture>();
+	auto matEarth = std::make_shared<Lambertian>(texEarth);
 	auto matPerlinNoise = std::make_shared<Lambertian>(texPerlinNoise);
 
 	HitableList world;

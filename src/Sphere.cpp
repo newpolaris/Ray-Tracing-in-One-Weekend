@@ -1,5 +1,20 @@
 #include "Sphere.h"
+#include <glm/gtc/constants.hpp>
 #include <Math/Intersection.h>
+
+namespace 
+{
+	void getSphereUV(const glm::vec3& p, float& u, float& v)
+	{
+		const float pi = glm::pi<float>();
+
+		float phi = std::atan2(p.z, p.x);
+		float theta = glm::asin(p.y);
+
+		u = 1 - (phi + pi) / (2*pi);
+		v = (theta + pi/2) / pi;
+	}
+}
 
 Sphere::Sphere(const glm::vec3& center, float radius, const MaterialPtr& material) noexcept
 	: m_Center(center)
@@ -25,6 +40,7 @@ bool Sphere::hit(const Math::Ray& r, float tMin, float tMax, HitRecord& rec) con
 		rec.position = r.position(rec.t);
 		rec.normal = (rec.position - m_Center) / m_Radius;
 		rec.material = m_Material;
+		getSphereUV(rec.normal, rec.u, rec.v);
 
 		return true;
 	}
@@ -34,6 +50,7 @@ bool Sphere::hit(const Math::Ray& r, float tMin, float tMax, HitRecord& rec) con
 		rec.position = r.position(rec.t);
 		rec.normal = (rec.position - m_Center) / m_Radius;
 		rec.material = m_Material;
+		getSphereUV(rec.normal, rec.u, rec.v);
 
 		return true;
 	}

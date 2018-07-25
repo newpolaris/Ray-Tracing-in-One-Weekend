@@ -9,7 +9,7 @@
 
 struct HitRecord 
 {
-	float t;
+	float t, u, v;
 	glm::vec3 position;
 	glm::vec3 normal;
 	MaterialPtr material;
