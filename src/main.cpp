@@ -44,6 +44,7 @@
 #include <NoiseTexture.h>
 #include <CheckerTexture.h>
 #include <ImageTexture.h>
+#include <DiffuseLight.h>
 #include <Rect.h>
 
 enum ProfilerType { ProfilerTypeRender = 0 };
@@ -141,7 +142,7 @@ glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth)
 	{
 		Math::Ray scattered(glm::vec3(0.f), glm::vec3(0.f));
 		glm::vec3 attenuation;
-		glm::vec3 emitted = rec.material->emiited(rec.u, rec.v, rec.position);
+		glm::vec3 emitted = rec.material->emmitted(rec.u, rec.v, rec.position);
 		if (depth < 50 && rec.material->scatter(ray, rec, attenuation, scattered))
 			return emitted + attenuation*color(scattered, world, depth + 1);
 		return emitted;
@@ -165,8 +166,8 @@ HitableList perlinSpheres()
 	HitableList world;
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000.f, matPerlinNoise));
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 2, 0), 2.0f, matPerlinNoise));
-	wolrd.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 7, 0), 2.0f, matLight));
-	wolrd.emplace_back(std::make_shared<RectXY>(3.f, 5.f, 1.f, 3.f, -2.f, matLight));
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 7, 0), 2.0f, matLight));
+	world.emplace_back(std::make_shared<RectXY>(3.f, 5.f, 1.f, 3.f, -2.f, matLight));
 
 	return world;
 }

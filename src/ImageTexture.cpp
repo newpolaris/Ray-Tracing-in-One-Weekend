@@ -1,4 +1,5 @@
 #include "ImageTexture.h"
+#include <algorithm>
 #include <tools/stb_image.h>
 
 ImageTexture::ImageTexture()
@@ -7,7 +8,7 @@ ImageTexture::ImageTexture()
 
 ImageTexture::ImageTexture(const std::string& filename)
 {
-	int width, height, nrComponents, numComponent;
+	int width, height, nrComponents, numComponent = 3;
     stbi_uc* imagedata = stbi_load(filename.c_str(), &width, &height, &nrComponents, numComponent);
     assert(imagedata != nullptr);
 	std::vector<std::uint8_t> data(imagedata, imagedata + width*height*numComponent);
