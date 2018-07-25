@@ -22,6 +22,21 @@ namespace perlin
 		std::shuffle(std::begin(perm), std::end(perm), g);
 		return perm;
 	}
+
+	float triliearInterp(float c[2][2][2], const glm::vec3& h)
+	{
+		float accum = 0.f;
+		for (int i = 0; i < 2; i++)
+			for (int j = 0; j < 2; j++)
+				for (int k = 0; k < 2; k++)
+				{
+					accum += (i*h.x + (1-i)*(1-h.x))
+						   * (j*h.y + (1-j)*(1-h.y))
+						   * (k*h.z + (1-k)*(1-h.z))
+						   * c[i][j][k];
+				}
+		return accum;
+	}
 }
 
 void perlin::initialize()
@@ -47,14 +62,22 @@ Perlin::Perlin()
 	assert(s_PermZ.size() > 0);
 }
 
-
 float Perlin::noise(const glm::vec3& position) const
 {
 	auto h = position - glm::floor(position);
-	int i = int(4*h.x) & perlin::n_1;
-	int j = int(4*h.y) & perlin::n_1;
-	int k = int(4*h.z) & perlin::n_1;
+	auto H = glm::floor(position);
+	h = h*h*(3.f - 2.f*h);
 
-	return s_Ranfloat[s_PermX[i] ^ s_PermY[j] ^ s_PermZ[k]];
+	float c[2][2][2];
+	for (int di = 0; di < 2; di++)
+		for (int dj = 0; dj < 2; dj++)
+			for (int dk = 0; dk < 2; dk++)
+			{
+				auto idx = s_PermX[(int(H.x)+di) & 0xFF]
+						^  s_PermY[(int(H.y)+dj) & 0xFF]
+						^  s_PermZ[(int(H.z)+dk) & 0xFF];
+				c[di][dj][dk] = s_Ranfloat[idx];
+			}
+	return triliearInterp(c, h);;
 }
 
