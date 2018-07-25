@@ -44,6 +44,7 @@
 #include <NoiseTexture.h>
 #include <CheckerTexture.h>
 #include <ImageTexture.h>
+#include <Rect.h>
 
 enum ProfilerType { ProfilerTypeRender = 0 };
 
@@ -140,14 +141,12 @@ glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth)
 	{
 		Math::Ray scattered(glm::vec3(0.f), glm::vec3(0.f));
 		glm::vec3 attenuation;
+		glm::vec3 emitted = rec.material->emiited(rec.u, rec.v, rec.position);
 		if (depth < 50 && rec.material->scatter(ray, rec, attenuation, scattered))
-			return attenuation*color(scattered, world, depth + 1);
-		return glm::vec3(0.f);
+			return emitted + attenuation*color(scattered, world, depth + 1);
+		return emitted;
 	}
-
-	auto dir = glm::normalize(ray.direction());
-	float t = 0.5f * dir.y + 1.f;
-	return glm::mix(glm::vec3(1.f), glm::vec3(0.5f, 0.7f, 1.f), t);
+	return glm::vec3(0.f);
 }
 
 HitableList perlinSpheres()
@@ -156,14 +155,18 @@ HitableList perlinSpheres()
 
 	const int NumGrid = 5;
 
+	auto texLight = std::make_shared<ConstantTexture>(glm::vec3(4.f));
 	auto texEarth = std::make_shared<ImageTexture>("resources/Earth.jpg");
     auto texPerlinNoise = std::make_shared<NoiseTexture>();
+	auto matLight = std::make_shared<DiffuseLight>(texLight);
 	auto matEarth = std::make_shared<Lambertian>(texEarth);
 	auto matPerlinNoise = std::make_shared<Lambertian>(texPerlinNoise);
 
 	HitableList world;
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000.f, matPerlinNoise));
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 2, 0), 2.0f, matPerlinNoise));
+	wolrd.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 7, 0), 2.0f, matLight));
+	wolrd.emplace_back(std::make_shared<RectXY>(3.f, 5.f, 1.f, 3.f, -2.f, matLight));
 
 	return world;
 }

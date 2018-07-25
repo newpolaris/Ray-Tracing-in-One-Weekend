@@ -5,6 +5,11 @@ Material::~Material()
 {
 }
 
+glm::vec3 Material::emmitted(float u, float v, const glm::vec3& position) const
+{
+	return glm::vec3(0.f);
+}
+
 Lambertian::~Lambertian()
 {
 }
