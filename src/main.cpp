@@ -131,6 +131,8 @@ glm::mat4 jitterProjMatrix(const glm::mat4& proj, int sampleCount, float jitterA
     return ret;
 }
 
+#define LIGHT_SOURCE 1
+
 glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth) 
 {
 	const float RAY_MIN = 1e-4f;
@@ -138,6 +140,7 @@ glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth)
 
 	HitRecord rec = { 0 };
 
+#if LIGHT_SOURCE
 	if (world->hit(ray, RAY_MIN, RAY_MAX, rec)) 
 	{
 		Math::Ray scattered(glm::vec3(0.f), glm::vec3(0.f));
@@ -148,6 +151,20 @@ glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth)
 		return emitted;
 	}
 	return glm::vec3(0.f);
+#else
+	if (world->hit(ray, RAY_MIN, RAY_MAX, rec)) 
+	{
+		Math::Ray scattered(glm::vec3(0.f), glm::vec3(0.f));
+		glm::vec3 attenuation;
+		if (depth < 50 && rec.material->scatter(ray, rec, attenuation, scattered))
+			return attenuation*color(scattered, world, depth + 1);
+		return glm::vec3(0.f);
+	}
+
+	auto dir = glm::normalize(ray.direction());
+	float t = 0.5f * dir.y + 1.f;
+	return glm::mix(glm::vec3(1.f), glm::vec3(0.5f, 0.7f, 1.f), t);
+#endif
 }
 
 HitableList perlinSpheres()
@@ -168,6 +185,7 @@ HitableList perlinSpheres()
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 2, 0), 2.0f, matPerlinNoise));
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 7, 0), 2.0f, matLight));
 	world.emplace_back(std::make_shared<RectXY>(3.f, 5.f, 1.f, 3.f, -2.f, matLight));
+	world.emplace_back(std::make_shared<RectXY>(3.f, 5.f, 1.f, 3.f, 5.f, matLight));
 
 	return world;
 }
@@ -175,13 +193,13 @@ HitableList perlinSpheres()
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
 	const int NumSamples = 100;
-	const float aperture = 0.1f;
+	const float aperture = 0.0f;
 	const float aspect = float(width)/height;
 
 	auto lookfrom = glm::vec3(13, 2, 3);
-	auto lookat = glm::vec3(0, 0, 0);
+	auto lookat = glm::vec3(0, 2, 0);
 	auto focusDistance = glm::length(lookfrom - lookat);
-	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 20.f, aspect, aperture, focusDistance, 0.f, 1.0f);
+	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 40.f, aspect, aperture, focusDistance, 0.f, 1.0f);
 
 	HitableList scene = perlinSpheres();
 	auto world = std::make_shared<BvhNode>(scene.begin(), scene.end(), 0.f, 1.f);
