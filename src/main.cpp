@@ -47,6 +47,9 @@
 #include <DiffuseLight.h>
 #include <Rect.h>
 #include <FlipNormal.h>
+#include <Box.h>
+#include <Translate.h>
+#include <Rotate.h>
 
 enum ProfilerType { ProfilerTypeRender = 0 };
 
@@ -196,28 +199,61 @@ HitableList cornellBox()
 	auto matLight = std::make_shared<DiffuseLight>(texLight);
 
 	HitableList world;
+	// Light
+	world.emplace_back(std::make_shared<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, matLight));
+	// Booth
 	world.emplace_back(std::make_shared<FlipNormal>(std::make_shared<RectYZ>(0.f, 555.f, 0.f, 555.f, 555.f, matGreen)));
 	world.emplace_back(std::make_shared<RectYZ>(0.f, 555.f, 0.f, 555.f, 0.f, matRed));
-	world.emplace_back(std::make_shared<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, matLight));
-	world.emplace_back(std::make_shared<FlipNormal>(std::make_shared<RectXZ>(0.f, 555.f, 0.f, 555.f, 555.f, matLight)));
+	world.emplace_back(std::make_shared<FlipNormal>(std::make_shared<RectXZ>(0.f, 555.f, 0.f, 555.f, 555.f, matWhite)));
 	world.emplace_back(std::make_shared<RectXZ>(0.f, 555.f, 0.f, 555.f, 0.f, matWhite));
 	world.emplace_back(std::make_shared<FlipNormal>(std::make_shared<RectXY>(0.f, 555.f, 0.f, 555.f, 555.f, matWhite)));
+	// Box
+	world.emplace_back(
+			std::make_shared<Translate>(
+				std::make_shared<RotateY>(
+					std::make_shared<Box>(
+						glm::vec3(0), glm::vec3(165, 165, 165), matWhite
+					),
+					-18
+				),
+				glm::vec3(130, 0, 65)
+			));
+	world.emplace_back(
+			std::make_shared<Translate>(
+				std::make_shared<RotateY>(
+					std::make_shared<Box>(
+						glm::vec3(0), glm::vec3(165, 330, 165), matWhite
+					),
+					15
+				),
+				glm::vec3(265, 0, 295)
+			));
 
 	return world;
 }
 
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
-	const int NumSamples = 100;
+	const int NumSamples = 1000;
 	const float aperture = 0.0f;
 	const float aspect = float(width)/height;
 
+#define SCENE_PERLINE 0
+#if SCENE_PERLINE
+	auto lookfrom = glm::vec3(13, 2, 3);
+	auto lookat = glm::vec3(0, 2, 0);
+	auto focusDistance = glm::length(lookfrom - lookat);
+	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 40.f, aspect, aperture, focusDistance, 0.f, 1.0f);
+
+	HitableList scene = perlinSpheres();
+#else
 	auto lookfrom = glm::vec3(278, 278, -800);
 	auto lookat = glm::vec3(278, 278, 0);
 	auto focusDistance = 10.0f;
 	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 40.f, aspect, aperture, focusDistance, 0.f, 1.0f);
 
 	HitableList scene = cornellBox();
+#endif
 	auto world = std::make_shared<BvhNode>(scene.begin(), scene.end(), 0.f, 1.f);
 
 	for (int y = height - 1; y >= 0; y--)
@@ -250,6 +286,7 @@ void writeToPPM(std::vector<glm::vec4>& image, int width, int height)
 	{
 		glm::vec3 source = glm::vec3(image[y*width + x]);
 		glm::ivec3 color = glm::pow(source, glm::vec3(1.f/2.2f)) * 255.99f;
+		color = glm::min(glm::ivec3(255), color);
 		fprintf(pFile, "%d %d %d\n", color.r, color.g, color.b);
 	}
 	fclose(pFile);

@@ -5,9 +5,13 @@ HitableSet::HitableSet()
 {
 }
 
-HitableSet::HitableSet(const HitableConstIter& begin, const HitableConstIter& end)
-	: m_Begin(begin)
-	, m_End(end)
+HitableSet::HitableSet(const std::vector<HitablePtr>& list)
+	: m_List(list)
+{
+}
+
+HitableSet::HitableSet(std::vector<HitablePtr>&& list) noexcept
+	: m_List(std::move(list))
 {
 }
 
@@ -16,11 +20,9 @@ bool HitableSet::hit(const Math::Ray& r, float tMin, float tMax, HitRecord& rec)
 	HitRecord record = { 0, };
 	bool bHit = false;
 	float closest = tMax;
-	auto it = m_Begin;
-	while (it != m_End)
+	for (auto it : m_List)
 	{
-		auto ptr = *it++; 
-		if (ptr->hit(r, tMin, closest, record))
+		if (it->hit(r, tMin, closest, record))
 		{
 			bHit = true;
 			closest = record.t;
@@ -32,18 +34,19 @@ bool HitableSet::hit(const Math::Ray& r, float tMin, float tMax, HitRecord& rec)
 
 bool HitableSet::boundingBox(float t0, float t1, Math::AABB& box) const
 {
-	if (m_Begin == m_End) 
+	if (m_List.empty())
 		return false;
 
 	Math::AABB bound;
-	auto it = m_Begin;
+	auto it = m_List.begin();
+	auto end = m_List.end();
 	auto item = *it++;
 	bool bSuccess = item->boundingBox(t0, t1, bound);
 	if (!bSuccess)
 		return false;
 
 	box = bound;
-	while (it != m_End)
+	while (it != end)
 	{
 		item = *it++;
 		if (!item->boundingBox(t0, t1, bound))
