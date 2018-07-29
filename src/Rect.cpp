@@ -76,8 +76,8 @@ bool RectXZ::hit(const Math::Ray& ray, float t0, float t1, HitRecord& rec) const
 bool RectXZ::boundingBox(float t0, float t1, Math::AABB& box) const
 {
 	const float planeThickness = 0.0001f;
-	box = Math::AABB(glm::vec3(m_X0, m_Z0, m_Y - planeThickness),
-					 glm::vec3(m_X1, m_Z1, m_Y + planeThickness));
+	box = Math::AABB(glm::vec3(m_X0, m_Y - planeThickness, m_Z0),
+					 glm::vec3(m_X1, m_Y + planeThickness, m_Z1));
 	return true;
 }
 
@@ -116,7 +116,7 @@ bool RectYZ::hit(const Math::Ray& ray, float t0, float t1, HitRecord& rec) const
 bool RectYZ::boundingBox(float t0, float t1, Math::AABB& box) const
 {
 	const float planeThickness = 0.0001f;
-	box = Math::AABB(glm::vec3(m_Y0, m_Z0, m_X - planeThickness),
-					 glm::vec3(m_Y1, m_Z1, m_X + planeThickness));
+	box = Math::AABB(glm::vec3(m_X - planeThickness, m_Y0, m_Z0),
+					 glm::vec3(m_X + planeThickness, m_Y1, m_Z1));
 	return true;
 }

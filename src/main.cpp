@@ -46,6 +46,7 @@
 #include <ImageTexture.h>
 #include <DiffuseLight.h>
 #include <Rect.h>
+#include <FlipNormal.h>
 
 enum ProfilerType { ProfilerTypeRender = 0 };
 
@@ -135,11 +136,10 @@ glm::mat4 jitterProjMatrix(const glm::mat4& proj, int sampleCount, float jitterA
 
 glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth) 
 {
-	const float RAY_MIN = 1e-4f;
+	const float RAY_MIN = 1e-3f;
 	const float RAY_MAX = 1e8f;
 
 	HitRecord rec = { 0 };
-
 #if LIGHT_SOURCE
 	if (world->hit(ray, RAY_MIN, RAY_MAX, rec)) 
 	{
@@ -169,15 +169,9 @@ glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth)
 
 HitableList perlinSpheres()
 {
-	using Math::BaseRandom;
-
-	const int NumGrid = 5;
-
 	auto texLight = std::make_shared<ConstantTexture>(glm::vec3(4.f));
-	auto texEarth = std::make_shared<ImageTexture>("resources/Earth.jpg");
     auto texPerlinNoise = std::make_shared<NoiseTexture>();
 	auto matLight = std::make_shared<DiffuseLight>(texLight);
-	auto matEarth = std::make_shared<Lambertian>(texEarth);
 	auto matPerlinNoise = std::make_shared<Lambertian>(texPerlinNoise);
 
 	HitableList world;
@@ -190,18 +184,40 @@ HitableList perlinSpheres()
 	return world;
 }
 
+HitableList cornellBox()
+{
+	auto texRed = std::make_shared<ConstantTexture>(glm::vec3(0.65f, 0.05f, 0.05f));
+	auto texWhite = std::make_shared<ConstantTexture>(glm::vec3(0.73f));
+	auto texGreen = std::make_shared<ConstantTexture>(glm::vec3(0.12f, 0.45f, 0.15f));
+	auto texLight = std::make_shared<ConstantTexture>(glm::vec3(15.f));
+	auto matRed = std::make_shared<Lambertian>(texRed);
+	auto matWhite = std::make_shared<Lambertian>(texWhite);
+	auto matGreen = std::make_shared<Lambertian>(texGreen);
+	auto matLight = std::make_shared<DiffuseLight>(texLight);
+
+	HitableList world;
+	world.emplace_back(std::make_shared<FlipNormal>(std::make_shared<RectYZ>(0.f, 555.f, 0.f, 555.f, 555.f, matGreen)));
+	world.emplace_back(std::make_shared<RectYZ>(0.f, 555.f, 0.f, 555.f, 0.f, matRed));
+	world.emplace_back(std::make_shared<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, matLight));
+	world.emplace_back(std::make_shared<FlipNormal>(std::make_shared<RectXZ>(0.f, 555.f, 0.f, 555.f, 555.f, matLight)));
+	world.emplace_back(std::make_shared<RectXZ>(0.f, 555.f, 0.f, 555.f, 0.f, matWhite));
+	world.emplace_back(std::make_shared<FlipNormal>(std::make_shared<RectXY>(0.f, 555.f, 0.f, 555.f, 555.f, matWhite)));
+
+	return world;
+}
+
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
 	const int NumSamples = 100;
 	const float aperture = 0.0f;
 	const float aspect = float(width)/height;
 
-	auto lookfrom = glm::vec3(13, 2, 3);
-	auto lookat = glm::vec3(0, 2, 0);
-	auto focusDistance = glm::length(lookfrom - lookat);
+	auto lookfrom = glm::vec3(278, 278, -800);
+	auto lookat = glm::vec3(278, 278, 0);
+	auto focusDistance = 10.0f;
 	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 40.f, aspect, aperture, focusDistance, 0.f, 1.0f);
 
-	HitableList scene = perlinSpheres();
+	HitableList scene = cornellBox();
 	auto world = std::make_shared<BvhNode>(scene.begin(), scene.end(), 0.f, 1.f);
 
 	for (int y = height - 1; y >= 0; y--)
