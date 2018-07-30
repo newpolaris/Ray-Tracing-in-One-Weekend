@@ -50,6 +50,7 @@
 #include <Box.h>
 #include <Translate.h>
 #include <Rotate.h>
+#include <ConstantMedium.h>
 
 enum ProfilerType { ProfilerTypeRender = 0 };
 
@@ -192,7 +193,7 @@ HitableList cornellBox()
 	auto texRed = std::make_shared<ConstantTexture>(glm::vec3(0.65f, 0.05f, 0.05f));
 	auto texWhite = std::make_shared<ConstantTexture>(glm::vec3(0.73f));
 	auto texGreen = std::make_shared<ConstantTexture>(glm::vec3(0.12f, 0.45f, 0.15f));
-	auto texLight = std::make_shared<ConstantTexture>(glm::vec3(15.f));
+	auto texLight = std::make_shared<ConstantTexture>(glm::vec3(7.f));
 	auto matRed = std::make_shared<Lambertian>(texRed);
 	auto matWhite = std::make_shared<Lambertian>(texWhite);
 	auto matGreen = std::make_shared<Lambertian>(texGreen);
@@ -200,7 +201,7 @@ HitableList cornellBox()
 
 	HitableList world;
 	// Light
-	world.emplace_back(std::make_shared<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, matLight));
+	world.emplace_back(std::make_shared<RectXZ>(113.f, 443.f, 127.f, 432.f, 554.f, matLight));
 	// Booth
 	world.emplace_back(std::make_shared<FlipNormal>(std::make_shared<RectYZ>(0.f, 555.f, 0.f, 555.f, 555.f, matGreen)));
 	world.emplace_back(std::make_shared<RectYZ>(0.f, 555.f, 0.f, 555.f, 0.f, matRed));
@@ -208,26 +209,22 @@ HitableList cornellBox()
 	world.emplace_back(std::make_shared<RectXZ>(0.f, 555.f, 0.f, 555.f, 0.f, matWhite));
 	world.emplace_back(std::make_shared<FlipNormal>(std::make_shared<RectXY>(0.f, 555.f, 0.f, 555.f, 555.f, matWhite)));
 	// Box
-	world.emplace_back(
-			std::make_shared<Translate>(
+	auto box1 = 
+		std::make_shared<Translate>(
+				std::make_shared<RotateY>(
+					std::make_shared<Box>(glm::vec3(0), glm::vec3(165, 165, 165), matWhite),
+					-18),
+				glm::vec3(130, 0, 65));
+	auto box2 = 
+		std::make_shared<Translate>(
 				std::make_shared<RotateY>(
 					std::make_shared<Box>(
-						glm::vec3(0), glm::vec3(165, 165, 165), matWhite
-					),
-					-18
-				),
-				glm::vec3(130, 0, 65)
-			));
-	world.emplace_back(
-			std::make_shared<Translate>(
-				std::make_shared<RotateY>(
-					std::make_shared<Box>(
-						glm::vec3(0), glm::vec3(165, 330, 165), matWhite
-					),
-					15
-				),
-				glm::vec3(265, 0, 295)
-			));
+						glm::vec3(0), glm::vec3(165, 330, 165), matWhite),
+					15),
+				glm::vec3(265, 0, 295));
+
+	world.emplace_back(std::make_shared<ConstantMedium>(box1, 0.01f, std::make_shared<ConstantTexture>(glm::vec3(1.f))));
+	world.emplace_back(std::make_shared<ConstantMedium>(box2, 0.01f, std::make_shared<ConstantTexture>(glm::vec3(0.f))));
 
 	return world;
 }
