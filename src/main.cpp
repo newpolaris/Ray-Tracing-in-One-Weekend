@@ -236,24 +236,35 @@ HitableList finalScene()
 	auto texLight = std::make_shared<ConstantTexture>(glm::vec3(7.f));
 	auto matLight = std::make_shared<DiffuseLight>(texLight);
 	glm::vec3 center(400, 400, 200);
+	auto smokeball = std::make_shared<Sphere>(glm::vec3(360, 150, 145), 70.f, std::make_shared<Dielectric>(1.5f));
 
 	HitableList list;
 	list.emplace_back(std::make_shared<RectXZ>(123, 423, 147, 412, 554, matLight));
 	list.emplace_back(std::make_shared<MovingSphere>(center, center + glm::vec3(30, 0, 0), 0.f, 1.f, 50.f, std::make_shared<Lambertian>(std::make_shared<ConstantTexture>(glm::vec3(0.7, 0.3, 0.1)))));
 	list.emplace_back(std::make_shared<Sphere>(glm::vec3(260, 150, 45), 50.f, std::make_shared<Dielectric>(1.5f)));
 	list.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 150, 145), 50.f, std::make_shared<Metal>(std::make_shared<ConstantTexture>(glm::vec3(0.8, 0.8, 0.9)), 10.0f)));
-
+	list.emplace_back(smokeball);
+	list.emplace_back(std::make_shared<ConstantMedium>(smokeball, 0.02f, std::make_shared<ConstantTexture>(glm::vec3(0.2f, 0.4f, 0.9f))));
+	// global fog
 	list.emplace_back(std::make_shared<ConstantMedium>(
 				std::make_shared<Sphere>(glm::vec3(0.f), 5000.f, std::make_shared<Dielectric>(1.5f)),
 				0.0001f,
 				std::make_shared<ConstantTexture>(glm::vec3(1.f))));
+
+	auto texEarth = std::make_shared<ImageTexture>("resources/Earth.jpg");
+	auto matEarth = std::make_shared<Lambertian>(texEarth);
+	list.emplace_back(std::make_shared<Sphere>(glm::vec3(400, 200, 400), 100.f, matEarth));
+    auto texPerlinNoise = std::make_shared<NoiseTexture>();
+	auto matPerlinNoise = std::make_shared<Lambertian>(texPerlinNoise);
+	list.emplace_back(std::make_shared<Sphere>(glm::vec3(220, 280, 300), 80.f, matPerlinNoise));
+
 
 	return list;
 }
 
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
-	const int NumSamples = 100;
+	const int NumSamples = 1000;
 	const float aperture = 0.0f;
 	const float aspect = float(width)/height;
 
