@@ -10,7 +10,6 @@ public:
 
 	ImageTexture();
 	ImageTexture(const std::string& filename);
-	ImageTexture(std::uint8_t* data, int width, int height);
 
 	virtual glm::vec3 value(float u, float v, const glm::vec3& position) const;
 

@@ -11,6 +11,27 @@ BvhNode::BvhNode(const HitableIter& begin, const HitableIter& end, float t0, flo
 	: m_Time0(t0)
 	, m_Time1(t1)
 {
+    build(begin, end, m_Time0, m_Time1);
+}
+
+BvhNode::BvhNode(const std::vector<HitablePtr>& list, float t0, float t1)
+	: m_List(list)
+    , m_Time0(t0)
+	, m_Time1(t1)
+{
+    build(m_List.begin(), m_List.end(), m_Time0, m_Time1);
+}
+
+BvhNode::BvhNode(std::vector<HitablePtr>&& list, float t0, float t1) noexcept
+	: m_List(std::move(list))
+    , m_Time0(t0)
+	, m_Time1(t1)
+{
+    build(m_List.begin(), m_List.end(), m_Time0, m_Time1);
+}
+
+void BvhNode::build(const HitableIter& begin, const HitableIter& end, float t0, float t1)
+{
 	int axis = int(3*Math::BaseRandom());
 	std::sort(begin, end, 
 			[t0, t1, axis](const HitablePtr& a, const HitablePtr& b) 

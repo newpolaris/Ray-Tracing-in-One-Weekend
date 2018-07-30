@@ -21,8 +21,8 @@ ImageTexture::ImageTexture(const std::string& filename)
 
 glm::vec3 ImageTexture::value(float u, float v, const glm::vec3& position) const
 {
-	int i = u * (m_Width - 1);
-	int j = (1.f - v) * (m_Height - 1);
+	int i = int(u * float(m_Width - 1));
+	int j = int((1.f - v) * float(m_Height - 1));
 	i = std::max(0, i);
 	j = std::max(0, j);
 	i = std::min(i, m_Width - 1);

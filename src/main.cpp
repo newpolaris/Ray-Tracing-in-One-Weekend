@@ -177,10 +177,12 @@ HitableList perlinSpheres()
     auto texPerlinNoise = std::make_shared<NoiseTexture>();
 	auto matLight = std::make_shared<DiffuseLight>(texLight);
 	auto matPerlinNoise = std::make_shared<Lambertian>(texPerlinNoise);
+	auto texEarth = std::make_shared<ImageTexture>("resources/Earth.jpg");
+	auto matEarth = std::make_shared<Lambertian>(texEarth);
 
 	HitableList world;
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000.f, matPerlinNoise));
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 2, 0), 2.0f, matPerlinNoise));
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 2, 0), 2.0f, matEarth));
 	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 7, 0), 2.0f, matLight));
 	world.emplace_back(std::make_shared<RectXY>(3.f, 5.f, 1.f, 3.f, -2.f, matLight));
 	world.emplace_back(std::make_shared<RectXY>(3.f, 5.f, 1.f, 3.f, 5.f, matLight));
@@ -213,14 +215,14 @@ HitableList cornellBox()
 		std::make_shared<Translate>(
 				std::make_shared<RotateY>(
 					std::make_shared<Box>(glm::vec3(0), glm::vec3(165, 165, 165), matWhite),
-					-18),
+					-18.f),
 				glm::vec3(130, 0, 65));
 	auto box2 = 
 		std::make_shared<Translate>(
 				std::make_shared<RotateY>(
 					std::make_shared<Box>(
 						glm::vec3(0), glm::vec3(165, 330, 165), matWhite),
-					15),
+					15.f),
 				glm::vec3(265, 0, 295));
 
 	world.emplace_back(std::make_shared<ConstantMedium>(box1, 0.01f, std::make_shared<ConstantTexture>(glm::vec3(1.f))));
@@ -239,7 +241,7 @@ HitableList finalScene()
 	auto smokeball = std::make_shared<Sphere>(glm::vec3(360, 150, 145), 70.f, std::make_shared<Dielectric>(1.5f));
 
 	HitableList list;
-	list.emplace_back(std::make_shared<RectXZ>(123, 423, 147, 412, 554, matLight));
+	list.emplace_back(std::make_shared<RectXZ>(123.f, 423.f, 147.f, 412.f, 554.f, matLight));
 	list.emplace_back(std::make_shared<MovingSphere>(center, center + glm::vec3(30, 0, 0), 0.f, 1.f, 50.f, std::make_shared<Lambertian>(std::make_shared<ConstantTexture>(glm::vec3(0.7, 0.3, 0.1)))));
 	list.emplace_back(std::make_shared<Sphere>(glm::vec3(260, 150, 45), 50.f, std::make_shared<Dielectric>(1.5f)));
 	list.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 150, 145), 50.f, std::make_shared<Metal>(std::make_shared<ConstantTexture>(glm::vec3(0.8, 0.8, 0.9)), 10.0f)));
@@ -258,17 +260,16 @@ HitableList finalScene()
 	auto matPerlinNoise = std::make_shared<Lambertian>(texPerlinNoise);
 	list.emplace_back(std::make_shared<Sphere>(glm::vec3(220, 280, 300), 80.f, matPerlinNoise));
 
-
 	return list;
 }
 
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
-	const int NumSamples = 1000;
+	const int NumSamples = 500;
 	const float aperture = 0.0f;
 	const float aspect = float(width)/height;
 
-#define SCENE_PERLINE 0
+#define SCENE_PERLINE 1
 #if SCENE_PERLINE
 	auto lookfrom = glm::vec3(13, 2, 3);
 	auto lookat = glm::vec3(0, 2, 0);
@@ -282,10 +283,10 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 	auto focusDistance = 10.0f;
 	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 40.f, aspect, aperture, focusDistance, 0.f, 1.0f);
 
-	// HitableList scene = cornellBox();
-	HitableList scene = finalScene();
+	HitableList scene = cornellBox();
+	// HitableList scene = finalScene();
 #endif
-	auto world = std::make_shared<BvhNode>(scene.begin(), scene.end(), 0.f, 1.f);
+	auto world = std::make_shared<BvhNode>(scene, 0.f, 1.f);
 
 	for (int y = height - 1; y >= 0; y--)
 	{
