@@ -225,8 +225,12 @@ HitableList cornellBox()
 					15.f),
 				glm::vec3(265, 0, 295));
 
-	world.emplace_back(std::make_shared<ConstantMedium>(box1, 0.01f, std::make_shared<ConstantTexture>(glm::vec3(1.f))));
-	world.emplace_back(std::make_shared<ConstantMedium>(box2, 0.01f, std::make_shared<ConstantTexture>(glm::vec3(0.f))));
+	// world.emplace_back(std::make_shared<ConstantMedium>(box1, 0.01f, std::make_shared<ConstantTexture>(glm::vec3(1.f))));
+	// world.emplace_back(std::make_shared<ConstantMedium>(box2, 0.01f, std::make_shared<ConstantTexture>(glm::vec3(0.f))));
+
+	auto smokeball = std::make_shared<Sphere>(glm::vec3(360, 150, 145), 70.f, std::make_shared<Dielectric>(1.5f));
+	world.emplace_back(smokeball);
+	world.emplace_back(std::make_shared<ConstantMedium>(smokeball, 0.02f, std::make_shared<ConstantTexture>(glm::vec3(0.2f, 0.4f, 0.9f))));
 
 	return world;
 }
@@ -237,14 +241,14 @@ HitableList finalScene()
 
 	auto texLight = std::make_shared<ConstantTexture>(glm::vec3(7.f));
 	auto matLight = std::make_shared<DiffuseLight>(texLight);
-	glm::vec3 center(400, 400, 200);
-	auto smokeball = std::make_shared<Sphere>(glm::vec3(360, 150, 145), 70.f, std::make_shared<Dielectric>(1.5f));
 
 	HitableList list;
 	list.emplace_back(std::make_shared<RectXZ>(123.f, 423.f, 147.f, 412.f, 554.f, matLight));
+	glm::vec3 center(400, 400, 200);
 	list.emplace_back(std::make_shared<MovingSphere>(center, center + glm::vec3(30, 0, 0), 0.f, 1.f, 50.f, std::make_shared<Lambertian>(std::make_shared<ConstantTexture>(glm::vec3(0.7, 0.3, 0.1)))));
 	list.emplace_back(std::make_shared<Sphere>(glm::vec3(260, 150, 45), 50.f, std::make_shared<Dielectric>(1.5f)));
 	list.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 150, 145), 50.f, std::make_shared<Metal>(std::make_shared<ConstantTexture>(glm::vec3(0.8, 0.8, 0.9)), 10.0f)));
+	auto smokeball = std::make_shared<Sphere>(glm::vec3(360, 150, 145), 70.f, std::make_shared<Dielectric>(1.5f));
 	list.emplace_back(smokeball);
 	list.emplace_back(std::make_shared<ConstantMedium>(smokeball, 0.02f, std::make_shared<ConstantTexture>(glm::vec3(0.2f, 0.4f, 0.9f))));
 	// global fog
@@ -269,7 +273,7 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 	const float aperture = 0.0f;
 	const float aspect = float(width)/height;
 
-#define SCENE_PERLINE 1
+#define SCENE_PERLINE 0
 #if SCENE_PERLINE
 	auto lookfrom = glm::vec3(13, 2, 3);
 	auto lookat = glm::vec3(0, 2, 0);
@@ -288,6 +292,7 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 #endif
 	auto world = std::make_shared<BvhNode>(scene, 0.f, 1.f);
 
+	#pragma omp parallel for
 	for (int y = height - 1; y >= 0; y--)
 	{
 		for (int x = width - 1; x >= 0; x--)
