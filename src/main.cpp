@@ -229,9 +229,31 @@ HitableList cornellBox()
 	return world;
 }
 
+HitableList finalScene()
+{
+	const int nb = 20;
+
+	auto texLight = std::make_shared<ConstantTexture>(glm::vec3(7.f));
+	auto matLight = std::make_shared<DiffuseLight>(texLight);
+	glm::vec3 center(400, 400, 200);
+
+	HitableList list;
+	list.emplace_back(std::make_shared<RectXZ>(123, 423, 147, 412, 554, matLight));
+	list.emplace_back(std::make_shared<MovingSphere>(center, center + glm::vec3(30, 0, 0), 0.f, 1.f, 50.f, std::make_shared<Lambertian>(std::make_shared<ConstantTexture>(glm::vec3(0.7, 0.3, 0.1)))));
+	list.emplace_back(std::make_shared<Sphere>(glm::vec3(260, 150, 45), 50.f, std::make_shared<Dielectric>(1.5f)));
+	list.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 150, 145), 50.f, std::make_shared<Metal>(std::make_shared<ConstantTexture>(glm::vec3(0.8, 0.8, 0.9)), 10.0f)));
+
+	list.emplace_back(std::make_shared<ConstantMedium>(
+				std::make_shared<Sphere>(glm::vec3(0.f), 5000.f, std::make_shared<Dielectric>(1.5f)),
+				0.0001f,
+				std::make_shared<ConstantTexture>(glm::vec3(1.f))));
+
+	return list;
+}
+
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
-	const int NumSamples = 1000;
+	const int NumSamples = 100;
 	const float aperture = 0.0f;
 	const float aspect = float(width)/height;
 
@@ -249,7 +271,8 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 	auto focusDistance = 10.0f;
 	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 40.f, aspect, aperture, focusDistance, 0.f, 1.0f);
 
-	HitableList scene = cornellBox();
+	// HitableList scene = cornellBox();
+	HitableList scene = finalScene();
 #endif
 	auto world = std::make_shared<BvhNode>(scene.begin(), scene.end(), 0.f, 1.f);
 
