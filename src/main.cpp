@@ -292,7 +292,7 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 #endif
 	auto world = std::make_shared<BvhNode>(scene, 0.f, 1.f);
 
-	#pragma omp parallel for
+	#pragma omp parallel num_threads(2)
 	for (int y = height - 1; y >= 0; y--)
 	{
 		for (int x = width - 1; x >= 0; x--)
