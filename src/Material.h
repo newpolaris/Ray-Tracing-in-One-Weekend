@@ -55,6 +55,11 @@ private:
 	float m_Fuzz;
 };
 
+/*
+As we implemented for glass, the albedo may vary with incident direction, and it varies with color.
+
+Shirley, Peter. Ray Tracing: The Rest Of Your Life (Ray Tracing Minibooks Book 3) (Kindle Locations 226-227).  . Kindle Edition. 
+*???/
 class Dielectric : public Material
 {
 public:

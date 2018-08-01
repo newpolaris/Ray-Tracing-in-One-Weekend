@@ -35,7 +35,7 @@ bool Metal::scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenu
     if (m_Fuzz > 0.f)
         reflected = glm::normalize(reflected + m_Fuzz*Math::randomUnitSphere());
     scattered = Math::Ray(rec.position, reflected, in.time());
-    attenuation = m_Albedo->value(0, 0, rec.position);
+    attenuation = m_Albedo->value(rec.u, rec.v, rec.position);
 
     return glm::dot(scattered.direction(), rec.normal) > 0;
 }
