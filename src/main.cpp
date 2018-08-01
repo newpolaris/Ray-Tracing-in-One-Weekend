@@ -239,10 +239,29 @@ HitableList finalScene()
 {
 	const int nb = 20;
 
+    auto matWhite = std::make_shared<Lambertian>(std::make_shared<ConstantTexture>(glm::vec3(0.73f)));
+    auto matGround = std::make_shared<Lambertian>(std::make_shared<ConstantTexture>(glm::vec3(0.48, 0.83, 0.53)));
+
+    HitableList ground; 
+    for (int i = 0; i < nb; i++)
+    for (int j = 0; j < nb; j++)
+    {
+        float w = 100;
+        float x0 = -1000 + i*w;
+        float z0 = -1000 + j*w;
+        float y0 = 0;
+        float x1 = x0 + w;
+        float y1 = 100*(Math::BaseRandom() + 0.01f);
+        float z1 = z0 + w;
+        ground.emplace_back(std::make_shared<Box>(glm::vec3(x0, y0, z0), glm::vec3(x1, y1, z1), matGround));
+    }
+    auto bvhGround = std::make_shared<BvhNode>(ground, 0.f, 1.f);
+
 	auto texLight = std::make_shared<ConstantTexture>(glm::vec3(7.f));
 	auto matLight = std::make_shared<DiffuseLight>(texLight);
 
 	HitableList list;
+    list.push_back(bvhGround);
 	list.emplace_back(std::make_shared<RectXZ>(123.f, 423.f, 147.f, 412.f, 554.f, matLight));
 	glm::vec3 center(400, 400, 200);
 	list.emplace_back(std::make_shared<MovingSphere>(center, center + glm::vec3(30, 0, 0), 0.f, 1.f, 50.f, std::make_shared<Lambertian>(std::make_shared<ConstantTexture>(glm::vec3(0.7, 0.3, 0.1)))));
@@ -269,7 +288,7 @@ HitableList finalScene()
 
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
-	const int NumSamples = 500;
+	const int NumSamples = 10000;
 	const float aperture = 0.0f;
 	const float aspect = float(width)/height;
 
@@ -282,17 +301,17 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 
 	HitableList scene = perlinSpheres();
 #else
-	auto lookfrom = glm::vec3(278, 278, -800);
+	auto lookfrom = glm::vec3(78, 328, -800);
 	auto lookat = glm::vec3(278, 278, 0);
 	auto focusDistance = 10.0f;
-	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 40.f, aspect, aperture, focusDistance, 0.f, 1.0f);
+	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 30.f, aspect, aperture, focusDistance, 0.f, 1.0f);
 
-	HitableList scene = cornellBox();
-	// HitableList scene = finalScene();
+	// HitableList scene = cornellBox();
+	HitableList scene = finalScene();
 #endif
 	auto world = std::make_shared<BvhNode>(scene, 0.f, 1.f);
 
-	#pragma omp parallel num_threads(2)
+	#pragma omp parallel for num_threads(3)
 	for (int y = height - 1; y >= 0; y--)
 	{
 		for (int x = width - 1; x >= 0; x--)
