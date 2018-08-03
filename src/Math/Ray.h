@@ -9,6 +9,7 @@ class Ray
 {
 public:
 
+	Ray() noexcept;
 	Ray(const glm::vec3& origin, const glm::vec3& direction) noexcept;
 	Ray(const glm::vec3& origin, const glm::vec3& direction, float time) noexcept;
 

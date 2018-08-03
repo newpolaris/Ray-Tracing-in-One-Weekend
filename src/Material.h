@@ -15,6 +15,8 @@ public:
 
 	virtual ~Material();
 	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const = 0;
+    virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered, float& pdf) const { return false; }
+    virtual float scatteringPdf(const Math::Ray& in, const HitRecord& rec, const Math::Ray& scattered) const { return 0.f; }
 	virtual glm::vec3 emmitted(float u, float v, const glm::vec3& position) const;
 };
 
@@ -29,6 +31,8 @@ public:
 	virtual ~Lambertian();
 
     virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const override;
+    virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& albedo, Math::Ray& scattered, float& pdf) const override;
+    virtual float scatteringPdf(const Math::Ray& in, const HitRecord& rec, const Math::Ray& scattered) const override;
 
 private:
 
@@ -55,11 +59,6 @@ private:
 	float m_Fuzz;
 };
 
-/*
-As we implemented for glass, the albedo may vary with incident direction, and it varies with color.
-
-Shirley, Peter. Ray Tracing: The Rest Of Your Life (Ray Tracing Minibooks Book 3) (Kindle Locations 226-227).  . Kindle Edition. 
-*???/
 class Dielectric : public Material
 {
 public:
@@ -77,7 +76,7 @@ public:
 		glm::vec3 normalOutward;
 		glm::vec3 reflected = glm::reflect(in.direction(), rec.normal);
 
-		attenuation = glm::vec3(1.f, 1.f, 1.f);
+		attenuation = glm::vec3(1.f, 1.f, 0.f);
 
 		if (glm::dot(in.direction(), rec.normal) > 0)
 		{

@@ -1,4 +1,5 @@
 #include "Material.h"
+#include <glm/gtc/type_ptr.hpp> 
 #include <Texture.h>
 
 Material::~Material()
@@ -23,6 +24,29 @@ bool Lambertian::scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& a
     attenuation = m_Albedo->value(rec.u, rec.v, rec.position);
 
     return true;
+}
+
+bool Lambertian::scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& albedo, Math::Ray& scattered, float& pdf) const
+{
+	const auto pi = glm::pi<float>();
+    glm::vec3 target = rec.position + rec.normal + Math::randomUnitSphere();
+    glm::vec3 dir = glm::normalize(target - rec.position);
+
+    scattered = Math::Ray(rec.position, dir, in.time());
+    albedo = m_Albedo->value(rec.u, rec.v, rec.position);
+	pdf = glm::dot(rec.normal, scattered.direction()) / pi;
+	// pdf = glm::max(pdf, 0.f);
+
+    return true;
+}
+
+float Lambertian::scatteringPdf(const Math::Ray& in, const HitRecord& rec, const Math::Ray& scattered) const
+{
+	const auto pi = glm::pi<float>();
+
+	float cosine = glm::dot(rec.normal, scattered.direction());
+	// cosine = glm::max(cosine, 0.f);
+	return cosine / pi;
 }
 
 Metal::~Metal()

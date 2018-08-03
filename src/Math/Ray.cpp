@@ -2,6 +2,10 @@
 
 using namespace Math;
 
+Ray::Ray() noexcept
+{
+}
+
 Ray::Ray(const glm::vec3& origin, const glm::vec3& direction) noexcept
 	: m_Origin(origin)
 	, m_Direction(direction)
