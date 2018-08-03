@@ -150,8 +150,9 @@ glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth)
 		glm::vec3 emitted = rec.material->emmitted(rec.u, rec.v, rec.position);
 		if (depth < 50 && rec.material->scatter(ray, rec, albedo, scattered, pdf))
 		{
-			auto scatteringPdf = rec.material->scatteringPdf(ray, rec, scattered);
+            if (pdf <= 0.f) return emitted;
 			auto source = color(scattered, world, depth + 1);
+			auto scatteringPdf = rec.material->scatteringPdf(ray, rec, scattered);
 			return emitted + (albedo * source * scatteringPdf / pdf);
 		}
 		return emitted;
@@ -278,7 +279,7 @@ HitableList finalScene()
 
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
-	const int NumSamples = 100;
+	const int NumSamples = 1000;
 	const float aperture = 0.0f;
 	const float aspect = float(width)/height;
 

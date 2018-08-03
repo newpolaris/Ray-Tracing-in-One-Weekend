@@ -35,7 +35,7 @@ bool Lambertian::scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& a
     scattered = Math::Ray(rec.position, dir, in.time());
     albedo = m_Albedo->value(rec.u, rec.v, rec.position);
 	pdf = glm::dot(rec.normal, scattered.direction()) / pi;
-	// pdf = glm::max(pdf, 0.f);
+    pdf = glm::max(0.f, pdf);
 
     return true;
 }
@@ -45,7 +45,7 @@ float Lambertian::scatteringPdf(const Math::Ray& in, const HitRecord& rec, const
 	const auto pi = glm::pi<float>();
 
 	float cosine = glm::dot(rec.normal, scattered.direction());
-	// cosine = glm::max(cosine, 0.f);
+    cosine = glm::max(cosine, 0.f);
 	return cosine / pi;
 }
 
