@@ -3,6 +3,7 @@ CMakeFiles/
 iem
 *.swp
 *.swo
+*.out
 cmake_install.cmake
 libglsw.a
 Makefile

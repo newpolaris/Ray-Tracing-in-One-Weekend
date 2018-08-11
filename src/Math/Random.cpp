@@ -1,9 +1,33 @@
 #include "Random.h"
 #include <cmath>
+#include <Math/RNG.h>
+#include <random>
+#include <thread>
+
+float Rand()
+{
+	return float(rand()) / (RAND_MAX + 1.f);
+}
+
+float RandPbrt()
+{
+	thread_local size_t id = std::hash<std::thread::id>{}(std::this_thread::get_id());
+	thread_local Math::RNG rng(id);
+	return rng.UniformFloat();
+}
+
+float RandMt19937()
+{
+	thread_local size_t id = std::hash<std::thread::id>{}(std::this_thread::get_id());
+	thread_local std::mt19937 engine(std::random_device{}());
+	engine.seed(id);
+	std::uniform_real_distribution<Float> dist(0, 1);
+	return dist(engine);
+}
 
 float Math::BaseRandom()
 {
-    return float(rand()) / (RAND_MAX + 1.f);
+    return RandMt19937();
 }
 
 glm::vec2 Math::randomUnitDisk()
