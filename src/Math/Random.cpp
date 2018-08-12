@@ -6,7 +6,11 @@
 
 float Rand()
 {
+#ifdef _WIN32
 	return float(rand()) / (RAND_MAX + 1.f);
+#else
+	return drand48();
+#endif
 }
 
 float RandPbrt()
@@ -16,17 +20,34 @@ float RandPbrt()
 	return rng.UniformFloat();
 }
 
+struct Twister
+{
+	Twister() noexcept 
+		: m_Engine(std::random_device{}())
+		, m_Dist(0, 1)
+	{
+		size_t id = std::hash<std::thread::id>{}(std::this_thread::get_id());
+		m_Engine.seed(id);
+	}
+	
+	Float operator()() noexcept
+	{
+		return m_Dist(m_Engine);
+	}
+
+	std::mt19937 m_Engine;
+	std::uniform_real_distribution<Float> m_Dist;
+};
+
 float RandMt19937()
 {
-	thread_local size_t id = std::hash<std::thread::id>{}(std::this_thread::get_id());
-	thread_local std::mt19937 engine(std::random_device{}());
-	engine.seed(id);
-	std::uniform_real_distribution<Float> dist(0, 1);
-	return dist(engine);
+	thread_local Twister twister;
+	return twister();
 }
 
 float Math::BaseRandom()
 {
+    return RandPbrt();
     return RandMt19937();
 }
 

@@ -1,15 +1,28 @@
 #include <iostream>
 #include <functional>
 #include <random>
-#include "../src/Math/RNG.h"
+#include <Math/RNG.h>
 
 Float test(std::function<Float(void)> f)
 {
 	Float sum = 0u;
-	auto k = 100000;
+	auto k = 100;
 	for (int i = 0; i < k; i++)
-		sum += f();
+	{
+		float t = f();
+		sum += t;
+		printf("%f\n", t);
+	}
 	return sum / k;
+}
+
+float RandMt19937()
+{
+	thread_local size_t id = std::hash<std::thread::id>{}(std::this_thread::get_id());
+	thread_local std::mt19937 engine(std::random_device{}());
+	engine.seed(id);
+	std::uniform_real_distribution<Float> dist(0, 1);
+	return dist(engine);
 }
 
 int main()

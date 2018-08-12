@@ -10,6 +10,9 @@ namespace Math
 	}
 }
 
+//
+// http://www.grs-sim.de/cms/upload/Carloni/Tutorials/CMB/MC2.pdf
+//
 void Run()
 {
 	int64_t inside_circle = 0;
