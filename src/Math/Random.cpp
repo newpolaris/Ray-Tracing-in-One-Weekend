@@ -4,51 +4,54 @@
 #include <random>
 #include <thread>
 
-float Rand()
-{
+namespace {
+	float Rand()
+	{
 #ifdef _WIN32
-	return float(rand()) / (RAND_MAX + 1.f);
+		return float(rand()) / (RAND_MAX + 1.f);
 #else
-	return drand48();
+		return drand48();
 #endif
-}
-
-float RandPbrt()
-{
-	thread_local size_t id = std::hash<std::thread::id>{}(std::this_thread::get_id());
-	thread_local Math::RNG rng(id);
-	return rng.UniformFloat();
-}
-
-struct Twister
-{
-	Twister() noexcept 
-		: m_Engine(std::random_device{}())
-		, m_Dist(0, 1)
-	{
-		size_t id = std::hash<std::thread::id>{}(std::this_thread::get_id());
-		m_Engine.seed(id);
-	}
-	
-	Float operator()() noexcept
-	{
-		return m_Dist(m_Engine);
 	}
 
-	std::mt19937 m_Engine;
-	std::uniform_real_distribution<Float> m_Dist;
-};
+	float RandPbrt()
+	{
+		thread_local size_t id = std::hash<std::thread::id>{}(std::this_thread::get_id());
+		thread_local Math::RNG rng(id);
+		return rng.UniformFloat();
+	}
 
-float RandMt19937()
-{
-	thread_local Twister twister;
-	return twister();
+	struct Twister
+	{
+		Twister() noexcept 
+			: m_Engine(std::random_device{}())
+			, m_Dist(0, 1)
+		{
+			size_t id = std::hash<std::thread::id>{}(std::this_thread::get_id());
+			m_Engine.seed(id);
+		}
+		
+		Float operator()() noexcept
+		{
+			return m_Dist(m_Engine);
+		}
+
+		std::mt19937 m_Engine;
+		std::uniform_real_distribution<Float> m_Dist;
+	};
+
+	float RandMt19937()
+	{
+		thread_local Twister twister;
+		return twister();
+	}
 }
 
 float Math::BaseRandom()
 {
     return RandPbrt();
     return RandMt19937();
+	return Rand();
 }
 
 glm::vec2 Math::randomUnitDisk()
@@ -60,6 +63,7 @@ glm::vec2 Math::randomUnitDisk()
 	return p;
 }
 
+// [OneWeek]
 glm::vec3 Math::randomUnitSphere()
 {
 	glm::vec3 p;
@@ -69,3 +73,19 @@ glm::vec3 Math::randomUnitSphere()
 	return p;
 }
 
+// [OneWeek]
+glm::vec3 Math::randomCosineDirection()
+{
+	float r1 = BaseRandom();
+	float r2 = BaseRandom();
+	float x = cos(2 * M_PI * r1) * sqrt(r2);
+	float y = sin(2 * M_PI * r1) * sqrt(r2);
+	float z = sqrt(1 - r2);
+	return glm::vec3(x, y, z);
+}
+
+// [OneWeek]
+float Math::randomCosineDirectionPdf(float cosTheta)
+{
+	return cosTheta / M_PI;
+}

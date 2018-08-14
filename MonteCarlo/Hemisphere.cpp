@@ -4,9 +4,10 @@
 #include <Math/Random.h>
 #include <Math/Sampling.h>
 
-const int NumSamples = 1 << 19;
+const int NumSamples = 1 << 15;
 
-// [OneWeek] Uniform
+// Uniform hemipshere
+// https://qiita.com/mebiusbox2/items/5a388ef4d5089568a529
 float trace0()
 {
 	float sum = 0.f;
@@ -14,8 +15,8 @@ float trace0()
 	{
 		float r1 = Math::BaseRandom();
 		float r2 = Math::BaseRandom();
-		float x = cos(2 * M_PI * r1) * 2 * sqrt(r2 * (1 - r2));
-		float y = sin(2 * M_PI * r1) * 2 * sqrt(r2 * (1 - r2));
+		float x = cos(2 * M_PI * r1) * sqrt(r2 * (2 - r2));
+		float y = sin(2 * M_PI * r1) * sqrt(r2 * (2 - r2));
 		float z = 1 - r2;
 		sum += z * z * z / (1.f / (2.f * M_PI));
 	}
@@ -28,12 +29,9 @@ float trace1()
 	float sum = 0.f;
 	for (int i = 0; i < NumSamples; i++)
 	{
-		float r1 = Math::BaseRandom();
-		float r2 = Math::BaseRandom();
-		float x = cos(2 * M_PI * r1) * sqrt(r2);
-		float y = sin(2 * M_PI * r1) * sqrt(r2);
-		float z = sqrt(1 - r2);
-		sum += z * z * z / (z / M_PI);
+		auto v = Math::randomCosineDirection();
+		auto pdf = Math::randomCosineDirectionPdf(v.z);
+		sum += v.z * v.z * v.z / pdf;
 	}
 	return sum / NumSamples;
 }
@@ -46,13 +44,8 @@ float trace2()
 	{
 		float r1 = Math::BaseRandom();
 		float r2 = Math::BaseRandom();
-		float z = r1;
-		float r = sqrt(fmax(0, 1.f - z * z));
-		float phi = 2 * M_PI * r2;
-		float x = r * cos(phi);
-		float y = r * sin(phi);
-
-		sum += z * z * z / (1.f / (2.f * M_PI));
+		glm::vec3 v = Math::uniformSampleHemisphere(glm::vec2(r1, r2));
+		sum += v.z * v.z * v.z / (1.f / (2.f * M_PI));
 	}
 	return sum / NumSamples;
 }

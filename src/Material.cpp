@@ -1,6 +1,8 @@
 #include "Material.h"
 #include <glm/gtc/type_ptr.hpp> 
 #include <Texture.h>
+#include <Math/Frame.h>
+#include <Math/Random.h>
 
 Material::~Material()
 {
@@ -29,12 +31,11 @@ bool Lambertian::scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& a
 bool Lambertian::scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& albedo, Math::Ray& scattered, float& pdf) const
 {
 	const auto pi = glm::pi<float>();
-    glm::vec3 target = rec.position + rec.normal + Math::randomUnitSphere();
-    glm::vec3 dir = glm::normalize(target - rec.position);
-
-    scattered = Math::Ray(rec.position, dir, in.time());
+	auto uvw = Math::Frame(rec.normal);
+    auto dir = uvw.local(Math::randomCosineDirection());
+    scattered = Math::Ray(rec.position, glm::normalize(dir), in.time());
     albedo = m_Albedo->value(rec.u, rec.v, rec.position);
-	pdf = glm::dot(rec.normal, scattered.direction()) / pi;
+	pdf = glm::dot(uvw.w(), scattered.direction()) / pi;
     pdf = glm::max(0.f, pdf);
 
     return true;
