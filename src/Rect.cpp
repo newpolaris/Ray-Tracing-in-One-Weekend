@@ -108,7 +108,7 @@ bool RectYZ::hit(const Math::Ray& ray, float t0, float t1, HitRecord& rec) const
 	rec.t = t;
 	rec.material = m_Material;
 	rec.position = ray.position(t);
-	rec.normal = glm::vec3(0.f, 1.f, 0.f);
+	rec.normal = glm::vec3(1.f, 0.f, 0.f);
 
 	return true;
 }

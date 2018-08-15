@@ -73,11 +73,11 @@ inline bool RotateY::hit(const Math::Ray& r, float t0, float t1, HitRecord& rec)
 	glm::vec3 normal = rec.normal;
 
 	p[0] = +m_CosTheta*rec.position[0] + m_SinTheta * rec.position[2];
-	p[2] = -m_SinTheta*rec.position[2] + m_CosTheta * rec.position[2];
+	p[2] = -m_SinTheta*rec.position[0] + m_CosTheta * rec.position[2];
 	normal[0] = +m_CosTheta*rec.normal[0] + m_SinTheta * rec.normal[2];
-	normal[2] = -m_SinTheta*rec.normal[2] + m_CosTheta * rec.normal[2];
+	normal[2] = -m_SinTheta*rec.normal[0] + m_CosTheta * rec.normal[2];
 	rec.position = p;
-	rec.normal = normal;
+	rec.normal = glm::normalize(normal);
 
 	return true;
 }

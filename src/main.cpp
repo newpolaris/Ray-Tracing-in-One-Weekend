@@ -142,40 +142,49 @@ glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth)
 	const float RAY_MAX = 1e8f;
 
 	HitRecord rec = { 0 };
-	if (world->hit(ray, RAY_MIN, RAY_MAX, rec)) 
-	{
-		float pdf;
-		glm::vec3 albedo;
-		Math::Ray scattered;
-		glm::vec3 emmitted = rec.material->emmitted(rec.u, rec.v, rec.position);
-		if (depth < 50 && rec.material->scatter(ray, rec, albedo, scattered, pdf))
-		{
-#if 1
-			glm::vec3 on_light = glm::vec3(
-					213.f + Math::BaseRandom()*(343 - 213),
-					554.f,
-					227.f + Math::BaseRandom()*(332 - 227));
-			glm::vec3 to_light = on_light - rec.position;
-			float distance_squared = glm::dot(to_light, to_light);
-			glm::vec3 to_light_norm = glm::normalize(to_light);
-			// if (glm::dot(to_light_norm, rec.normal) < 0.f) return emmitted;
-			float light_area = (343-213)*(332-227);
-			float light_cosine = glm::abs(to_light_norm.y);
-			if (light_cosine < 0.00001f)
-				return emmitted;
-			pdf = distance_squared / (light_cosine * light_area);
-			scattered = Math::Ray(rec.position, to_light_norm, ray.time());
-#endif
+	if (!world->hit(ray, RAY_MIN, RAY_MAX, rec)) 
+        return glm::vec3(0.f);
 
-			if (pdf <= 0.f) return emmitted;
-			auto source = color(scattered, world, depth + 1);
-			auto scatteringPdf = rec.material->scatteringPdf(ray, rec, scattered);
+    glm::vec3 emmitted = rec.material->emmitted(rec.u, rec.v, rec.position);
 
-			return emmitted + (albedo * source * scatteringPdf / pdf);
-		}
-		return emmitted;
-	}
-	return glm::vec3(0.f);
+    if (depth >= 50)
+        return emmitted;
+
+    float pdf;
+    glm::vec3 albedo;
+    Math::Ray scattered;
+    if (!rec.material->scatter(ray, rec, albedo, scattered, pdf))
+        return emmitted;
+
+    glm::vec3 on_light = glm::vec3(
+            213.f + Math::BaseRandom()*(343 - 213),
+            554.f,
+            227.f + Math::BaseRandom()*(332 - 227));
+
+    glm::vec3 to_light = on_light - rec.position;
+    float distance_squared = glm::dot(to_light, to_light);
+    glm::vec3 to_light_norm = glm::normalize(to_light);
+
+    if (glm::dot(to_light_norm, rec.normal) < 0.f)
+        if (glm::abs(rec.position.y - 278.f) < 10.f)
+            return glm::vec3(1, 0, 0); 
+        else return emmitted;
+
+    float light_area = (343-213)*(332-227);
+
+    float light_cosine = glm::abs(to_light_norm.y);
+    if (light_cosine < 0.00001f)
+        return emmitted;
+
+    pdf = distance_squared / (light_cosine * light_area);
+    scattered = Math::Ray(rec.position, to_light_norm, ray.time());
+
+    if (pdf <= 0.f) return emmitted;
+
+    auto source = color(scattered, world, depth + 1);
+    auto scatteringPdf = rec.material->scatteringPdf(ray, rec, scattered);
+
+    return emmitted + (albedo * source * scatteringPdf / pdf);
 }
 
 HitableList perlinSpheres()
