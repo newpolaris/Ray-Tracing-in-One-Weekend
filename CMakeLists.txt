@@ -12,16 +12,6 @@ set(UNITTEST_TARGET UnitTest.app)
 #endif()
 
 find_package(OpenGL REQUIRED)
-find_package(OpenMP)
-if (OPENMP_FOUND)
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-else(OPENMP_FOUND)
-	if(DEFINED OpenMP_C_FLAGS AND APPLE)
-		set(libomp omp)
-	endif()
-endif(OPENMP_FOUND)
 
 set(UseGLI TRUE)
 set(UseZlib TRUE)
@@ -61,7 +51,6 @@ set(ALL_LIBS
 	imgui
 	gli
 	zlibstatic
-	${libomp}
 )
 
 add_definitions(
@@ -84,6 +73,7 @@ set(UNITTEST_SRC
 	src/Math/AABB.cpp
 	src/Math/Ray.cpp
 	src/Math/Random.cpp
+	src/Math/RNG.cpp
 )
 
 add_executable(${APP_TARGET} ${SRC})
