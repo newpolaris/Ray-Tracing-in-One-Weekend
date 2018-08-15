@@ -7,8 +7,20 @@ namespace Math {
 
 using namespace Math;
 
-const Float OneMinusEpsilon = 0x1.fffffep-1;
-// const Float OneMinusEpsilon = 0x1.fffffffffffffp-1;
+// Random Number Declarations
+#ifndef PBRT_HAVE_HEX_FP_CONSTANTS
+static const double DoubleOneMinusEpsilon = 0.99999999999999989;
+static const float FloatOneMinusEpsilon = 0.99999994;
+#else
+static const double DoubleOneMinusEpsilon = 0x1.fffffffffffffp-1;
+static const float FloatOneMinusEpsilon = 0x1.fffffep-1;
+#endif
+
+#ifdef PBRT_FLOAT_IS_DOUBLE
+static const Float OneMinusEpsilon = DoubleOneMinusEpsilon;
+#else
+static const Float OneMinusEpsilon = FloatOneMinusEpsilon;
+#endif
 
 #define PCG32_DEFAULT_STATE 0x853c49e6748fea9bULL
 #define PCG32_DEFAULT_STREAM 0xda3e39cb94b95bdbULL
@@ -40,6 +52,10 @@ uint32_t RNG::UniformUInt32() noexcept
 
 Float RNG::UniformFloat() noexcept
 {
-	Float f = Float(UniformUInt32() * 0x1p-32f);
+#ifndef PBRT_HAVE_HEX_FP_CONSTANTS
+    Float f = Float(UniformUInt32() * 2.3283064365386963e-10f);
+#else
+    Float f = Float(OneMinusEpsilon, Float(UniformUInt32() * 0x1p-32f);
+#endif
 	return f < OneMinusEpsilon ? f : OneMinusEpsilon;
 }
