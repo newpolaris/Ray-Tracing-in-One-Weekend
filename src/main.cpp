@@ -145,16 +145,15 @@ glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth)
 	if (!world->hit(ray, RAY_MIN, RAY_MAX, rec)) 
         return glm::vec3(0.f);
 
-    glm::vec3 emmitted = rec.material->emmitted(rec.u, rec.v, rec.position);
-
+    glm::vec3 emitted = rec.material->emitted(ray, rec);
     if (depth >= 50)
-        return emmitted;
+        return emitted;
 
     float pdf;
     glm::vec3 albedo;
     Math::Ray scattered;
     if (!rec.material->scatter(ray, rec, albedo, scattered, pdf))
-        return emmitted;
+        return emitted;
 
     glm::vec3 on_light = glm::vec3(
             213.f + Math::BaseRandom()*(343 - 213),
@@ -164,27 +163,24 @@ glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth)
     glm::vec3 to_light = on_light - rec.position;
     float distance_squared = glm::dot(to_light, to_light);
     glm::vec3 to_light_norm = glm::normalize(to_light);
-
     if (glm::dot(to_light_norm, rec.normal) < 0.f)
-        if (glm::abs(rec.position.y - 278.f) < 10.f)
-            return glm::vec3(1, 0, 0); 
-        else return emmitted;
+		return emitted;
 
     float light_area = (343-213)*(332-227);
 
     float light_cosine = glm::abs(to_light_norm.y);
     if (light_cosine < 0.00001f)
-        return emmitted;
+        return emitted;
 
     pdf = distance_squared / (light_cosine * light_area);
     scattered = Math::Ray(rec.position, to_light_norm, ray.time());
 
-    if (pdf <= 0.f) return emmitted;
+    if (pdf <= 0.f) return emitted;
 
     auto source = color(scattered, world, depth + 1);
     auto scatteringPdf = rec.material->scatteringPdf(ray, rec, scattered);
 
-    return emmitted + (albedo * source * scatteringPdf / pdf);
+    return emitted + (albedo * source * scatteringPdf / pdf);
 }
 
 HitableList perlinSpheres()
@@ -206,6 +202,40 @@ HitableList perlinSpheres()
 	return world;
 }
 
+class ShapeBuilder
+{
+public:
+
+	ShapeBuilder(const HitablePtr& hitable) : m_Hitable(hitable) {}
+
+	template <typename T, typename ...Args>
+	static ShapeBuilder Build(Args... args)
+	{
+		return ShapeBuilder(std::make_shared<T>(std::forward<Args>(args)...));
+	}
+
+	ShapeBuilder flip()
+	{
+		return ShapeBuilder(std::make_shared<FlipNormal>(m_Hitable));
+	}
+
+	ShapeBuilder rotate(const glm::vec3& axis, float angle)
+	{
+		return ShapeBuilder(std::make_shared<Rotate>(m_Hitable, glm::angleAxis(glm::radians(angle), axis)));
+	}
+
+	ShapeBuilder translate(const glm::vec3& t)
+	{
+		return ShapeBuilder(std::make_shared<Translate>(m_Hitable, t));
+	}
+
+	HitablePtr get() { return m_Hitable; }
+
+private:
+
+	HitablePtr m_Hitable;
+};
+
 HitableList cornellBox()
 {
 	auto texRed = std::make_shared<ConstantTexture>(glm::vec3(0.65f, 0.05f, 0.05f));
@@ -220,7 +250,7 @@ HitableList cornellBox()
 	HitableList world;
 
 	// Light
-	world.emplace_back(std::make_shared<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, matLight));
+	world.emplace_back(std::make_shared<FlipNormal>(std::make_shared<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, matLight)));
 
 	// Booth
 	world.emplace_back(std::make_shared<FlipNormal>(std::make_shared<RectYZ>(0.f, 555.f, 0.f, 555.f, 555.f, matGreen)));
@@ -237,12 +267,10 @@ HitableList cornellBox()
 					-18.f),
 				glm::vec3(130, 0, 65)));
 
-	world.emplace_back(
-			std::make_shared<Translate>(
-				std::make_shared<RotateY>(
-					std::make_shared<Box>(glm::vec3(0), glm::vec3(165, 330, 165), matWhite),
-					15.f),
-				glm::vec3(265, 0, 295)));
+	world.emplace_back(ShapeBuilder::Build<Box>(glm::vec3(0), glm::vec3(165, 330, 165), matWhite)
+			.rotate(glm::vec3(0, 1, 0), 15.f)
+			.translate(glm::vec3(265, 0, 295))
+			.get());
 
 	return world;
 }

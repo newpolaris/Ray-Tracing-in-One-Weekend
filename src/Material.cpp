@@ -8,7 +8,7 @@ Material::~Material()
 {
 }
 
-glm::vec3 Material::emmitted(float u, float v, const glm::vec3& position) const
+glm::vec3 Material::emitted(const Math::Ray& in, const HitRecord& rec) const
 {
 	return glm::vec3(0.f);
 }

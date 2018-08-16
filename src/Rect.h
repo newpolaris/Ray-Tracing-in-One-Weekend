@@ -2,6 +2,14 @@
 
 #include <Hitable.h>
 
+class Rect : public Hitable
+{
+public:
+
+private:
+
+};
+
 class RectXY : public Hitable
 {
 public:

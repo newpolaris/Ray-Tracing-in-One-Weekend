@@ -9,8 +9,8 @@ public:
 
 	DiffuseLight(const TexturePtr& emit);
 
-	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const;
-	virtual glm::vec3 emmitted(float u, float v, const glm::vec3& position) const;
+	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const override;
+	virtual glm::vec3 emitted(const Math::Ray& in, const HitRecord& rec) const override;
 
 private:
 

@@ -11,7 +11,9 @@ bool DiffuseLight::scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3&
 	return false;
 }
 
-glm::vec3 DiffuseLight::emmitted(float u, float v, const glm::vec3& position) const
+glm::vec3 DiffuseLight::emitted(const Math::Ray& in, const HitRecord& rec) const
 {
-	return m_Emit->value(u, v, position);
+	if (glm::dot(rec.normal, in.direction()) < 0.f)
+		return m_Emit->value(rec.u, rec.v, rec.position);
+	return glm::vec3(0.f);
 }

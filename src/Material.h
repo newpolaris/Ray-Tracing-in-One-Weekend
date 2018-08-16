@@ -17,7 +17,7 @@ public:
 	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const = 0;
     virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered, float& pdf) const { return false; }
     virtual float scatteringPdf(const Math::Ray& in, const HitRecord& rec, const Math::Ray& scattered) const { return 0.f; }
-	virtual glm::vec3 emmitted(float u, float v, const glm::vec3& position) const;
+	virtual glm::vec3 emitted(const Math::Ray& in, const HitRecord& rec) const;
 };
 
 class Lambertian : public Material
