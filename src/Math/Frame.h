@@ -1,4 +1,4 @@
-// ortho-normal bases
+#pragma once
 
 #include <glm/glm.hpp>
 

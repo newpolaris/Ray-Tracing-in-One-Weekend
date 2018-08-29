@@ -17,8 +17,8 @@ public:
 	RectXY();
 	RectXY(float x0, float x1, float y0, float y1, float z, const MaterialPtr& material);
 
-	virtual bool hit(const Math::Ray& ray, float t0, float t1, HitRecord& rec) const;
-	virtual bool boundingBox(float t0, float t1, Math::AABB& box) const;
+	virtual bool hit(const Math::Ray& ray, float t0, float t1, HitRecord& rec) const override;
+	virtual bool boundingBox(float t0, float t1, Math::AABB& box) const override;
 
 private:
 
@@ -33,8 +33,10 @@ public:
 	RectXZ();
 	RectXZ(float x0, float x1, float z0, float z1, float y, const MaterialPtr& material);
 
-	virtual bool hit(const Math::Ray& ray, float t0, float t1, HitRecord& rec) const;
-	virtual bool boundingBox(float t0, float t1, Math::AABB& box) const;
+	virtual bool hit(const Math::Ray& ray, float t0, float t1, HitRecord& rec) const override;
+	virtual bool boundingBox(float t0, float t1, Math::AABB& box) const override;
+	virtual float probability(const glm::vec3& origin, const glm::vec3& direction) const override;
+	virtual glm::vec3 random(const glm::vec3& origin) const override;
 
 private:
 
@@ -49,8 +51,8 @@ public:
 	RectYZ();
 	RectYZ(float y0, float y1, float z0, float z1, float x, const MaterialPtr& material);
 
-	virtual bool hit(const Math::Ray& ray, float t0, float t1, HitRecord& rec) const;
-	virtual bool boundingBox(float t0, float t1, Math::AABB& box) const;
+	virtual bool hit(const Math::Ray& ray, float t0, float t1, HitRecord& rec) const override;
+	virtual bool boundingBox(float t0, float t1, Math::AABB& box) const override;
 
 private:
 

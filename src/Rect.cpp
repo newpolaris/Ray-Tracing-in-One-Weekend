@@ -1,5 +1,5 @@
 #include "Rect.h"
-
+#include <Math/Random.h>
 
 RectXY::RectXY()
 {
@@ -79,6 +79,29 @@ bool RectXZ::boundingBox(float t0, float t1, Math::AABB& box) const
 	box = Math::AABB(glm::vec3(m_X0, m_Y - planeThickness, m_Z0),
 					 glm::vec3(m_X1, m_Y + planeThickness, m_Z1));
 	return true;
+}
+ 
+
+float RectXZ::probability(const glm::vec3& origin, const glm::vec3& direction) const
+{
+	HitRecord rec;
+	if (!hit(Math::Ray(origin, direction), 0.001f, FLT_MAX, rec))
+		return 0.f;
+    float area = (m_X1 - m_X0)*(m_Z1 - m_Z0);
+	float distance_squared = rec.t * rec.t;
+	float cosine = glm::dot(direction, rec.normal);
+    if (cosine < 0.00001f)
+        return 0.f;
+	return distance_squared / (cosine * area);
+
+}
+
+glm::vec3 RectXZ::random(const glm::vec3& origin) const
+{
+	auto dx = Math::BaseRandom();
+	auto dz = Math::BaseRandom();
+    glm::vec3 toward(m_X0 + dx*(m_X1 - m_X0), m_Y, m_Z0 + dz*(m_Z1 - m_Z0));
+    return glm::normalize(toward - origin);
 }
 
 RectYZ::RectYZ()

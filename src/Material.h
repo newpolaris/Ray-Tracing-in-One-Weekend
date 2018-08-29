@@ -8,6 +8,13 @@
 #include <Hitable.h>
 
 struct HitRecord;
+struct ScatterRecord
+{
+	bool bSpecular;
+	Math::Ray specular_ray;
+	glm::vec3 attenuation;
+	PdfPtr pdf_ptr;
+};
 
 class Material
 {
@@ -15,7 +22,7 @@ public:
 
 	virtual ~Material();
 	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const = 0;
-    virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered, float& pdf) const { return false; }
+    virtual bool scatter(const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const { return false; }
     virtual float scatteringPdf(const Math::Ray& in, const HitRecord& rec, const Math::Ray& scattered) const { return 0.f; }
 	virtual glm::vec3 emitted(const Math::Ray& in, const HitRecord& rec) const;
 };
@@ -31,7 +38,7 @@ public:
 	virtual ~Lambertian();
 
     virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const override;
-    virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& albedo, Math::Ray& scattered, float& pdf) const override;
+    virtual bool scatter(const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const override;
     virtual float scatteringPdf(const Math::Ray& in, const HitRecord& rec, const Math::Ray& scattered) const override;
 
 private:
@@ -52,6 +59,7 @@ public:
 	virtual ~Metal();
 
 	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const override;
+	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const override;
 
 private:
 

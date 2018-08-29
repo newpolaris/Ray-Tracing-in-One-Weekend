@@ -50,6 +50,7 @@
 #include <Box.h>
 #include <Translate.h>
 #include <Rotate.h>
+#include <Pdf.h>
 #include <ConstantMedium.h>
 
 enum ProfilerType { ProfilerTypeRender = 0 };
@@ -136,84 +137,11 @@ glm::mat4 jitterProjMatrix(const glm::mat4& proj, int sampleCount, float jitterA
     return ret;
 }
 
-glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth) 
-{
-	const float RAY_MIN = 1e-3f;
-	const float RAY_MAX = 1e8f;
-
-	HitRecord rec = { 0 };
-	if (!world->hit(ray, RAY_MIN, RAY_MAX, rec)) 
-        return glm::vec3(0.f);
-
-    glm::vec3 emitted = rec.material->emitted(ray, rec);
-    if (depth >= 50)
-        return emitted;
-
-    float pdf;
-    glm::vec3 albedo;
-    Math::Ray scattered;
-    if (!rec.material->scatter(ray, rec, albedo, scattered, pdf))
-        return emitted;
-
-    glm::vec3 on_light = glm::vec3(
-            213.f + Math::BaseRandom()*(343 - 213),
-            554.f,
-            227.f + Math::BaseRandom()*(332 - 227));
-
-    glm::vec3 to_light = on_light - rec.position;
-    float distance_squared = glm::dot(to_light, to_light);
-    glm::vec3 to_light_norm = glm::normalize(to_light);
-    if (glm::dot(to_light_norm, rec.normal) < 0.f)
-		return emitted;
-
-    float light_area = (343-213)*(332-227);
-
-    float light_cosine = glm::abs(to_light_norm.y);
-    if (light_cosine < 0.00001f)
-        return emitted;
-
-    pdf = distance_squared / (light_cosine * light_area);
-    scattered = Math::Ray(rec.position, to_light_norm, ray.time());
-
-    if (pdf <= 0.f) return emitted;
-
-    auto source = color(scattered, world, depth + 1);
-    auto scatteringPdf = rec.material->scatteringPdf(ray, rec, scattered);
-
-    return emitted + (albedo * source * scatteringPdf / pdf);
-}
-
-HitableList perlinSpheres()
-{
-	auto texLight = std::make_shared<ConstantTexture>(glm::vec3(4.f));
-    auto texPerlinNoise = std::make_shared<NoiseTexture>();
-	auto matLight = std::make_shared<DiffuseLight>(texLight);
-	auto matPerlinNoise = std::make_shared<Lambertian>(texPerlinNoise);
-	auto texEarth = std::make_shared<ImageTexture>("resources/Earth.jpg");
-	auto matEarth = std::make_shared<Lambertian>(texEarth);
-
-	HitableList world;
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000.f, matPerlinNoise));
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 2, 0), 2.0f, matEarth));
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 7, 0), 2.0f, matLight));
-	world.emplace_back(std::make_shared<RectXY>(3.f, 5.f, 1.f, 3.f, -2.f, matLight));
-	world.emplace_back(std::make_shared<RectXY>(3.f, 5.f, 1.f, 3.f, 5.f, matLight));
-
-	return world;
-}
-
 class ShapeBuilder
 {
 public:
 
 	ShapeBuilder(const HitablePtr& hitable) : m_Hitable(hitable) {}
-
-	template <typename T, typename ...Args>
-	static ShapeBuilder Build(Args... args)
-	{
-		return ShapeBuilder(std::make_shared<T>(std::forward<Args>(args)...));
-	}
-
 	ShapeBuilder flip()
 	{
 		return ShapeBuilder(std::make_shared<FlipNormal>(m_Hitable));
@@ -236,6 +164,65 @@ private:
 	HitablePtr m_Hitable;
 };
 
+template <typename T, typename ...Args>
+static ShapeBuilder BuildShape(Args... args)
+{
+	return ShapeBuilder(std::make_shared<T>(std::forward<Args>(args)...));
+}
+
+HitablePtr light_shape = std::make_shared<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, nullptr);
+
+glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth) 
+{
+	const float RAY_MIN = 1e-3f;
+	const float RAY_MAX = 1e8f;
+
+	HitRecord hrec = { 0 };
+	if (!world->hit(ray, RAY_MIN, RAY_MAX, hrec)) 
+        return glm::vec3(0.f);
+
+    glm::vec3 emitted = hrec.material->emitted(ray, hrec);
+    if (depth >= 50)
+        return emitted;
+
+    float pdf;
+    Math::Ray scattered;
+	ScatterRecord srec = { 0 };
+    if (!hrec.material->scatter(ray, hrec, srec))
+        return emitted;
+
+	auto p0 = std::make_shared<HitablePdf>(light_shape, hrec.position);
+	MixturePdf p(p0, srec.pdf_ptr);
+	scattered = Math::Ray(hrec.position, p.generate(), ray.time());
+	pdf = p.probability(scattered.direction());
+
+    if (pdf <= 0.f) return emitted;
+
+    auto source = color(scattered, world, depth + 1);
+    auto scatteringPdf = hrec.material->scatteringPdf(ray, hrec, scattered);
+
+    return emitted + (srec.attenuation * source * scatteringPdf / pdf);
+}
+
+HitableList perlinSpheres()
+{
+	auto texLight = std::make_shared<ConstantTexture>(glm::vec3(4.f));
+    auto texPerlinNoise = std::make_shared<NoiseTexture>();
+	auto matLight = std::make_shared<DiffuseLight>(texLight);
+	auto matPerlinNoise = std::make_shared<Lambertian>(texPerlinNoise);
+	auto texEarth = std::make_shared<ImageTexture>("resources/Earth.jpg");
+	auto matEarth = std::make_shared<Lambertian>(texEarth);
+
+	HitableList world;
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000.f, matPerlinNoise));
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 2, 0), 2.0f, matEarth));
+	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 7, 0), 2.0f, matLight));
+	world.emplace_back(std::make_shared<RectXY>(3.f, 5.f, 1.f, 3.f, -2.f, matLight));
+	world.emplace_back(std::make_shared<RectXY>(3.f, 5.f, 1.f, 3.f, 5.f, matLight));
+
+	return world;
+}
+
 HitableList cornellBox()
 {
 	auto texRed = std::make_shared<ConstantTexture>(glm::vec3(0.65f, 0.05f, 0.05f));
@@ -250,24 +237,22 @@ HitableList cornellBox()
 	HitableList world;
 
 	// Light
-	world.emplace_back(std::make_shared<FlipNormal>(std::make_shared<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, matLight)));
+	world.emplace_back(BuildShape<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, matLight).flip().get());
 
 	// Booth
-	world.emplace_back(std::make_shared<FlipNormal>(std::make_shared<RectYZ>(0.f, 555.f, 0.f, 555.f, 555.f, matGreen)));
+	world.emplace_back(BuildShape<RectYZ>(0.f, 555.f, 0.f, 555.f, 555.f, matGreen).flip().get());
 	world.emplace_back(std::make_shared<RectYZ>(0.f, 555.f, 0.f, 555.f, 0.f, matRed));
-	world.emplace_back(std::make_shared<FlipNormal>(std::make_shared<RectXZ>(0.f, 555.f, 0.f, 555.f, 555.f, matWhite)));
+	world.emplace_back(BuildShape<RectXZ>(0.f, 555.f, 0.f, 555.f, 555.f, matWhite).flip().get());
 	world.emplace_back(std::make_shared<RectXZ>(0.f, 555.f, 0.f, 555.f, 0.f, matWhite));
-	world.emplace_back(std::make_shared<FlipNormal>(std::make_shared<RectXY>(0.f, 555.f, 0.f, 555.f, 555.f, matWhite)));
+	world.emplace_back(BuildShape<RectXY>(0.f, 555.f, 0.f, 555.f, 555.f, matWhite).flip().get());
 
 	// Box
-	world.emplace_back(
-			std::make_shared<Translate>(
-				std::make_shared<RotateY>(
-					std::make_shared<Box>(glm::vec3(0), glm::vec3(165, 165, 165), matWhite),
-					-18.f),
-				glm::vec3(130, 0, 65)));
+	world.emplace_back(BuildShape<Box>(glm::vec3(0), glm::vec3(165, 165, 165), matWhite)
+			.rotate(glm::vec3(0, 1, 0), -18.f)
+			.translate(glm::vec3(130, 0, 65))
+			.get());
 
-	world.emplace_back(ShapeBuilder::Build<Box>(glm::vec3(0), glm::vec3(165, 330, 165), matWhite)
+	world.emplace_back(BuildShape<Box>(glm::vec3(0), glm::vec3(165, 330, 165), matWhite)
 			.rotate(glm::vec3(0, 1, 0), 15.f)
 			.translate(glm::vec3(265, 0, 295))
 			.get());
@@ -334,7 +319,7 @@ HitableList finalScene()
 
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
-	const int NumSamples = 10;
+	const int NumSamples = 100;
 	const float aperture = 0.0f;
 	const float aspect = float(width)/height;
 

@@ -3,6 +3,7 @@
 #include <Texture.h>
 #include <Math/Frame.h>
 #include <Math/Random.h>
+#include <Pdf.h>
 
 Material::~Material()
 {
@@ -28,16 +29,11 @@ bool Lambertian::scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& a
     return true;
 }
 
-bool Lambertian::scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& albedo, Math::Ray& scattered, float& pdf) const
+bool Lambertian::scatter(const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const
 {
-	const auto pi = glm::pi<float>();
-	auto uvw = Math::Frame(rec.normal);
-    auto dir = uvw.local(Math::randomCosineDirection());
-    scattered = Math::Ray(rec.position, glm::normalize(dir), in.time());
-    albedo = m_Albedo->value(rec.u, rec.v, rec.position);
-	pdf = glm::dot(uvw.w(), scattered.direction()) / pi;
-    pdf = glm::max(0.f, pdf);
-
+	srec.bSpecular = false;
+	srec.attenuation = m_Albedo->value(rec.u, rec.v, rec.position);
+	srec.pdf_ptr = std::make_shared<CosinePdf>(rec.normal);
     return true;
 }
 
@@ -54,7 +50,7 @@ Metal::~Metal()
 {
 }
 
-bool Metal::scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray & scattered) const
+bool Metal::scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const
 {
     glm::vec3 reflected = glm::reflect(in.direction(), rec.normal);
     if (m_Fuzz > 0.f)
@@ -64,6 +60,19 @@ bool Metal::scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenu
 
     return glm::dot(scattered.direction(), rec.normal) > 0;
 }
+
+bool Metal::scatter(const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const
+{
+    glm::vec3 reflected = glm::reflect(in.direction(), rec.normal);
+	reflected = glm::normalize(reflected + m_Fuzz*Math::randomUnitSphere());
+    srec.specular_ray = Math::Ray(rec.position, reflected, in.time());
+    srec.attenuation = m_Albedo->value(rec.u, rec.v, rec.position);
+	srec.bSpecular = true;
+	srec.pdf_ptr = nullptr;
+
+    return glm::dot(reflected, rec.normal) > 0;
+}
+
 
 Dielectric::~Dielectric()
 {

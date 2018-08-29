@@ -23,4 +23,6 @@ public:
 
 	virtual bool hit(const Math::Ray& r, float tMin, float tMax, HitRecord& rec) const = 0;
 	virtual bool boundingBox(float t0, float t1, Math::AABB& box) const = 0;
+	virtual float probability(const glm::vec3& origin, const glm::vec3& direction) const;
+	virtual glm::vec3 random(const glm::vec3& origin) const;
 };
