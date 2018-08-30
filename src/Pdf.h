@@ -68,10 +68,10 @@ class MixturePdf : public Pdf
 {
 public:
 
-	MixturePdf(const PdfPtr& pdf0, const PdfPtr& pdf1) 
+	MixturePdf(PdfPtr pdf0, PdfPtr pdf1) 
 	{
-		m_Pdf[0] = pdf0;
-		m_Pdf[1] = pdf1;
+		m_Pdf[0] = std::move(pdf0);
+		m_Pdf[1] = std::move(pdf1);
 	}
 
 	virtual float probability(const glm::vec3& direction) const override

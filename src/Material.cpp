@@ -64,8 +64,8 @@ bool Metal::scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenu
 bool Metal::scatter(const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const
 {
     glm::vec3 reflected = glm::reflect(in.direction(), rec.normal);
-	reflected = glm::normalize(reflected + m_Fuzz*Math::randomUnitSphere());
-    srec.specular_ray = Math::Ray(rec.position, reflected, in.time());
+	glm::vec3 dir = glm::normalize(reflected + m_Fuzz*Math::randomUnitSphere());
+    srec.specular_ray = Math::Ray(rec.position, dir, in.time());
     srec.attenuation = m_Albedo->value(rec.u, rec.v, rec.position);
 	srec.bSpecular = true;
 	srec.pdf_ptr = nullptr;

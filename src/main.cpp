@@ -10,6 +10,7 @@
 #include <tools/Profile.h>
 #include <tools/imgui.h>
 #include <tools/TCamera.h>
+#include <tools/stb_image_write.h>
 
 #include <GLType/GraphicsDevice.h>
 #include <GLType/GraphicsData.h>
@@ -170,9 +171,7 @@ static ShapeBuilder BuildShape(Args... args)
 	return ShapeBuilder(std::make_shared<T>(std::forward<Args>(args)...));
 }
 
-HitablePtr light_shape = std::make_shared<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, nullptr);
-
-glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth) 
+glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, const HitablePtr& light_shape, int depth) 
 {
 	const float RAY_MIN = 1e-3f;
 	const float RAY_MAX = 1e8f;
@@ -185,23 +184,26 @@ glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, int depth)
     if (depth >= 50)
         return emitted;
 
-    float pdf;
-    Math::Ray scattered;
 	ScatterRecord srec = { 0 };
     if (!hrec.material->scatter(ray, hrec, srec))
         return emitted;
 
-	auto p0 = std::make_shared<HitablePdf>(light_shape, hrec.position);
-	MixturePdf p(p0, srec.pdf_ptr);
-	scattered = Math::Ray(hrec.position, p.generate(), ray.time());
-	pdf = p.probability(scattered.direction());
+	if (srec.bSpecular)
+		return srec.attenuation * color(srec.specular_ray, world, light_shape, depth + 1);
+	else
+	{
+		auto plight = std::make_shared<HitablePdf>(light_shape, hrec.position);
+		MixturePdf p(plight, srec.pdf_ptr);
+		Math::Ray scattered = Math::Ray(hrec.position, p.generate(), ray.time());
+		float pdf_value = p.probability(scattered.direction());
 
-    if (pdf <= 0.f) return emitted;
+		if (pdf_value <= 0.f) return emitted;
 
-    auto source = color(scattered, world, depth + 1);
-    auto scatteringPdf = hrec.material->scatteringPdf(ray, hrec, scattered);
+		auto source = color(scattered, world, light_shape, depth + 1);
+		auto scatteringPdf = hrec.material->scatteringPdf(ray, hrec, scattered);
 
-    return emitted + (srec.attenuation * source * scatteringPdf / pdf);
+		return emitted + (srec.attenuation * source * scatteringPdf / pdf_value);
+	}
 }
 
 HitableList perlinSpheres()
@@ -229,10 +231,12 @@ HitableList cornellBox()
 	auto texWhite = std::make_shared<ConstantTexture>(glm::vec3(0.73f));
 	auto texGreen = std::make_shared<ConstantTexture>(glm::vec3(0.12f, 0.45f, 0.15f));
 	auto texLight = std::make_shared<ConstantTexture>(glm::vec3(15.f));
+	auto texAluminum = std::make_shared<ConstantTexture>(glm::vec3(0.8f, 0.85f, 0.88f));
 	auto matRed = std::make_shared<Lambertian>(texRed);
 	auto matWhite = std::make_shared<Lambertian>(texWhite);
 	auto matGreen = std::make_shared<Lambertian>(texGreen);
 	auto matLight = std::make_shared<DiffuseLight>(texLight);
+	auto matAluminum = std::make_shared<Metal>(texAluminum, 0.f);
 
 	HitableList world;
 
@@ -252,7 +256,7 @@ HitableList cornellBox()
 			.translate(glm::vec3(130, 0, 65))
 			.get());
 
-	world.emplace_back(BuildShape<Box>(glm::vec3(0), glm::vec3(165, 330, 165), matWhite)
+	world.emplace_back(BuildShape<Box>(glm::vec3(0), glm::vec3(165, 330, 165), matAluminum)
 			.rotate(glm::vec3(0, 1, 0), 15.f)
 			.translate(glm::vec3(265, 0, 295))
 			.get());
@@ -343,6 +347,7 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 	HitableList scene = finalScene();
 #endif
 	auto world = std::make_shared<BvhNode>(scene, 0.f, 1.f);
+	const HitablePtr light_shape = std::make_shared<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, nullptr);
 
 	#pragma omp parallel for num_threads(3)
 	for (int y = height - 1; y >= 0; y--)
@@ -356,12 +361,33 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 				float v = float(y + Math::BaseRandom()) / height;
 
 				auto ray = camera.ray(u, v);
-				c += glm::vec4(color(ray, world, 0), 1.f);
+				c += glm::vec4(color(ray, world, light_shape, 0), 1.f);
 			}
 			image[y*width + x] = c / float(NumSamples);
 		}
 		printf("Process status: height %4d done\n", y);
 	}
+}
+
+void writeToPNG(std::vector<glm::vec4>& image, int width, int height)
+{
+	struct rgba { 
+		rgba() {}
+		rgba(const glm::ivec3& color) : r(color.r), g(color.g), b(color.b), a(0xff) {}
+		uint8_t r, g, b, a; 
+	};
+	std::vector<rgba> temp(width*height*4);
+	for (int y = 0; y < height; y++)
+	for (int x = 0; x < width; x++)
+	{
+		auto index = y*width + x;
+		glm::vec3 source = glm::vec3(image[index]);
+		glm::ivec3 color = glm::pow(source, glm::vec3(1.f/2.2f)) * 255.99f;
+		color = glm::min(glm::ivec3(255), color);
+		temp[index] = color;
+	}
+	stbi_flip_vertically_on_write(1);
+	stbi_write_png("result.png", width, height, 4, temp.data(), width*4);
 }
 
 void writeToPPM(std::vector<glm::vec4>& image, int width, int height)
@@ -493,7 +519,7 @@ void RayTracer::update() noexcept
 		profiler::start(ProfilerTypeRender);
 
 		test(image, width, height);
-		writeToPPM(image, width, height);
+		writeToPNG(image, width, height);
 
 		profiler::stop(ProfilerTypeRender);
 		profiler::tick(ProfilerTypeRender, s_CpuTick, s_GpuTick);
