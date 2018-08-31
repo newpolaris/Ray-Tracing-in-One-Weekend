@@ -1,16 +1,13 @@
 #include <HitableSet.h>
 #include <algorithm>
+#include <Math/Random.h>
+#include <algorithm>
 
 HitableSet::HitableSet()
 {
 }
 
-HitableSet::HitableSet(const std::vector<HitablePtr>& list)
-	: m_List(list)
-{
-}
-
-HitableSet::HitableSet(std::vector<HitablePtr>&& list) noexcept
+HitableSet::HitableSet(std::vector<HitablePtr> list) noexcept
 	: m_List(std::move(list))
 {
 }
@@ -55,3 +52,21 @@ bool HitableSet::boundingBox(float t0, float t1, Math::AABB& box) const
 	}
 	return true;
 }
+
+float HitableSet::pdf_value(const glm::vec3& origin, const glm::vec3& direction) const
+{
+	assert(m_List.size() > 0);
+	float sum = 0;
+	for (auto& p : m_List)
+		sum += p->pdf_value(origin, direction);
+	return sum / m_List.size();
+}
+
+glm::vec3 HitableSet::random(const glm::vec3& origin) const
+{
+	size_t n = m_List.size();
+	size_t index = size_t(Math::BaseRandom() * n);
+	assert(index < n);
+	return m_List[index]->random(origin);
+}
+

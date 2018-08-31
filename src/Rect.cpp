@@ -82,7 +82,7 @@ bool RectXZ::boundingBox(float t0, float t1, Math::AABB& box) const
 }
  
 
-float RectXZ::probability(const glm::vec3& origin, const glm::vec3& direction) const
+float RectXZ::pdf_value(const glm::vec3& origin, const glm::vec3& direction) const
 {
 	HitRecord rec;
 	if (!hit(Math::Ray(origin, direction), 0.001f, FLT_MAX, rec))
@@ -93,7 +93,6 @@ float RectXZ::probability(const glm::vec3& origin, const glm::vec3& direction) c
     if (cosine < 0.00001f)
         return 0.f;
 	return distance_squared / (cosine * area);
-
 }
 
 glm::vec3 RectXZ::random(const glm::vec3& origin) const

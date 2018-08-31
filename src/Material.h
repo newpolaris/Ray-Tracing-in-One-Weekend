@@ -21,7 +21,7 @@ class Material
 public:
 
 	virtual ~Material();
-	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const = 0;
+	virtual bool scatter(const Math::Ray& r_in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const { return false; }
     virtual bool scatter(const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const { return false; }
     virtual float scatteringPdf(const Math::Ray& in, const HitRecord& rec, const Math::Ray& scattered) const { return 0.f; }
 	virtual glm::vec3 emitted(const Math::Ray& in, const HitRecord& rec) const;
@@ -37,7 +37,6 @@ public:
 
 	virtual ~Lambertian();
 
-    virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const override;
     virtual bool scatter(const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const override;
     virtual float scatteringPdf(const Math::Ray& in, const HitRecord& rec, const Math::Ray& scattered) const override;
 
@@ -58,7 +57,6 @@ public:
 
 	virtual ~Metal();
 
-	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const override;
 	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const override;
 
 private:
@@ -75,8 +73,11 @@ public:
 
 	virtual ~Dielectric();
 
-	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const override
+	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const override
 	{
+		srec.pdf_ptr = nullptr;
+		srec.bSpecular = true;
+
 		float cosine;
 		float refractRatio;
 		float reflectProbability;
@@ -84,7 +85,7 @@ public:
 		glm::vec3 normalOutward;
 		glm::vec3 reflected = glm::reflect(in.direction(), rec.normal);
 
-		attenuation = glm::vec3(1.f, 1.f, 0.f);
+		srec.attenuation = glm::vec3(1.f);
 
 		if (glm::dot(in.direction(), rec.normal) > 0)
 		{
@@ -105,9 +106,9 @@ public:
 			reflectProbability = 1.f;
 
 		if (Math::BaseRandom() < reflectProbability) 
-			scattered = Math::Ray(rec.position, reflected, in.time());
+			srec.specular_ray = Math::Ray(rec.position, reflected, in.time());
 		else
-			scattered = Math::Ray(rec.position, refracted, in.time());
+			srec.specular_ray = Math::Ray(rec.position, refracted, in.time());
 		return true;
 	}
 

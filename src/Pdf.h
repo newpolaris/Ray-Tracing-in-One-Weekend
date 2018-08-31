@@ -50,7 +50,7 @@ public:
 
 	virtual float probability(const glm::vec3& direction) const override
 	{
-		return m_Hitable->probability(m_Origin, direction);
+		return m_Hitable->pdf_value(m_Origin, direction);
 	}
 
 	virtual glm::vec3 generate() const override

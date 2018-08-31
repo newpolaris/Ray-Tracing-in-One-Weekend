@@ -75,6 +75,14 @@ struct SceneSettings
     const int numSamples = 4;
 };
 
+glm::vec3 de_nan(glm::vec3 c)
+{
+	return glm::vec3(
+			!(c[0] == c[0]) ? 0 : c[0],
+            !(c[1] == c[1]) ? 0 : c[1], 
+            !(c[2] == c[2]) ? 0 : c[2]); 
+}
+
 static float Halton(int index, float base)
 {
     float result = 0.0f;
@@ -236,7 +244,7 @@ HitableList cornellBox()
 	auto matWhite = std::make_shared<Lambertian>(texWhite);
 	auto matGreen = std::make_shared<Lambertian>(texGreen);
 	auto matLight = std::make_shared<DiffuseLight>(texLight);
-	auto matAluminum = std::make_shared<Metal>(texAluminum, 0.f);
+	auto matGlass = std::make_shared<Dielectric>(1.5f);
 
 	HitableList world;
 
@@ -252,14 +260,12 @@ HitableList cornellBox()
 
 	// Box
 	world.emplace_back(BuildShape<Box>(glm::vec3(0), glm::vec3(165, 165, 165), matWhite)
-			.rotate(glm::vec3(0, 1, 0), -18.f)
-			.translate(glm::vec3(130, 0, 65))
-			.get());
-
-	world.emplace_back(BuildShape<Box>(glm::vec3(0), glm::vec3(165, 330, 165), matAluminum)
 			.rotate(glm::vec3(0, 1, 0), 15.f)
 			.translate(glm::vec3(265, 0, 295))
 			.get());
+
+	// Sphere
+	world.emplace_back(BuildShape<Sphere>(glm::vec3(190.f, 90.f, 190.f), 90.f, matGlass).get());
 
 	return world;
 }
@@ -323,7 +329,7 @@ HitableList finalScene()
 
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
-	const int NumSamples = 100;
+	const int NumSamples = 1000;
 	const float aperture = 0.0f;
 	const float aspect = float(width)/height;
 
@@ -348,6 +354,11 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 #endif
 	auto world = std::make_shared<BvhNode>(scene, 0.f, 1.f);
 	const HitablePtr light_shape = std::make_shared<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, nullptr);
+	const HitablePtr glass_sphere = BuildShape<Sphere>(glm::vec3(190.f, 90.f, 190.f), 90.f, nullptr).get();
+	std::vector<HitablePtr> lights;
+	lights.emplace_back(BuildShape<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, nullptr).get());
+	lights.emplace_back(BuildShape<Sphere>(glm::vec3(190.f, 90.f, 190.f), 90.f, nullptr).get());
+	auto lightSetPtr = std::make_shared<HitableSet>(lights);
 
 	#pragma omp parallel for num_threads(3)
 	for (int y = height - 1; y >= 0; y--)
@@ -361,7 +372,8 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 				float v = float(y + Math::BaseRandom()) / height;
 
 				auto ray = camera.ray(u, v);
-				c += glm::vec4(color(ray, world, light_shape, 0), 1.f);
+				glm::vec3 cc = color(ray, world, lightSetPtr, 0);
+				c += glm::vec4(de_nan(cc), 1.f);
 			}
 			image[y*width + x] = c / float(NumSamples);
 		}
