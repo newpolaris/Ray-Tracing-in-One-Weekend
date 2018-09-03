@@ -14,7 +14,6 @@ external/FreeImage/FreeImage.dir/
 external/FreeImage/FreeImageTest.dir/
 build/
 debug/
-test/
 release/
 imgui.ini
 /external/FreeImage/*.cmake
