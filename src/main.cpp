@@ -11,6 +11,7 @@
 #include <tools/imgui.h>
 #include <tools/TCamera.h>
 #include <tools/stb_image_write.h>
+#include <tools/Parallel.h>
 
 #include <GLType/GraphicsDevice.h>
 #include <GLType/GraphicsData.h>
@@ -321,37 +322,18 @@ HitableList finalScene()
 	return list;
 }
 
-#define SCENE_PERLINE 0
-#define SCENE_CORNELL 1
-#define SCENE_FINAL 2
-
-#define SCENE_CODE SCENE_CORNELL
-
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
 	const int NumSamples = 100;
 	const float aperture = 0.0f;
 	const float aspect = float(width)/height;
 
-#if SCENE_CODE == SCENE_PERLINE
-	auto lookfrom = glm::vec3(13, 2, 3);
-	auto lookat = glm::vec3(0, 2, 0);
-	auto focusDistance = glm::length(lookfrom - lookat);
-	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 40.f, aspect, aperture, focusDistance, 0.f, 1.0f);
-	HitableList scene = perlinSpheres();
-#elif SCENE_CODE == SCENE_CORNELL
 	auto lookfrom = glm::vec3(278, 278, -800);
 	auto lookat = glm::vec3(278, 278, 0);
 	auto focusDistance = 10.0f;
 	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 40.f, aspect, aperture, focusDistance, 0.f, 1.0f);
 	HitableList scene = cornellBox();
-#else
-	auto lookfrom = glm::vec3(78, 328, -800);
-	auto lookat = glm::vec3(278, 278, 0);
-	auto focusDistance = 10.0f;
-	Camera camera(lookfrom, lookat, glm::vec3(0, 1, 0), 30.f, aspect, aperture, focusDistance, 0.f, 1.0f);
-	HitableList scene = finalScene();
-#endif
+
 	auto world = std::make_shared<BvhNode>(scene, 0.f, 1.f);
 	const HitablePtr light_shape = std::make_shared<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, nullptr);
 	const HitablePtr glass_sphere = BuildShape<Sphere>(glm::vec3(190.f, 90.f, 190.f), 90.f, nullptr).get();
@@ -360,25 +342,25 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 	lights.emplace_back(BuildShape<Sphere>(glm::vec3(190.f, 90.f, 190.f), 90.f, nullptr).get());
 	auto lightSetPtr = std::make_shared<HitableSet>(lights);
 
-	#pragma omp parallel for num_threads(3)
-	for (int y = height - 1; y >= 0; y--)
-	{
-		for (int x = width - 1; x >= 0; x--)
-		{
-			glm::vec4 c(0.f);
-			for (int s = 0; s < NumSamples; s++)
-			{
-				float u = float(x + Math::BaseRandom()) / width;
-				float v = float(y + Math::BaseRandom()) / height;
+    ParallelFor([&](int64_t y)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            glm::vec4 c(0.f);
+            for (int s = 0; s < NumSamples; s++)
+            {
+                float u = float(x + Math::BaseRandom()) / width;
+                float v = float(y + Math::BaseRandom()) / height;
 
-				auto ray = camera.ray(u, v);
-				glm::vec3 cc = color(ray, world, lightSetPtr, 0);
-				c += glm::vec4(de_nan(cc), 1.f);
-			}
-			image[y*width + x] = c / float(NumSamples);
-		}
-		printf("Process status: height %4d done\n", y);
-	}
+                auto ray = camera.ray(u, v);
+                glm::vec3 cc = color(ray, world, lightSetPtr, 0);
+                c += glm::vec4(de_nan(cc), 1.f);
+            }
+            int index = int(y*width + x);
+            image[index] = c / float(NumSamples);
+        }
+        printf("Process status: height %4d done\n", int(y));
+    }, height);
 }
 
 void writeToPNG(std::vector<glm::vec4>& image, int width, int height)

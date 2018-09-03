@@ -25,7 +25,7 @@
 
 #include "RNG.h"
 
-#ifdef _WIN32
+#ifndef _WIN32
 #define PBRT_HAVE_HEX_FP_CONSTANTS
 #endif
 

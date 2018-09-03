@@ -80,7 +80,7 @@ namespace Math
     {
 	#if _WIN32
         unsigned long lz;
-        _BitScanReverse64(&lz, value);
+        _BitScanReverse(&lz, value);
 		return lz;
 	#else
 		return 63 - __builtin_clzll(value);
