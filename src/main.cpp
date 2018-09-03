@@ -329,7 +329,7 @@ HitableList finalScene()
 
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
-	const int NumSamples = 1000;
+	const int NumSamples = 100;
 	const float aperture = 0.0f;
 	const float aspect = float(width)/height;
 

@@ -3,8 +3,6 @@
 #include <cstdint>
 #include <algorithm>
 
-using Float = float;
-
 namespace Math {
 
 class RNG
@@ -17,7 +15,7 @@ public:
 	void SetSequence(uint64_t sequenceIndex) noexcept;
 	uint32_t UniformUInt32() noexcept;
 	uint32_t UniformUInt32(uint32_t b) noexcept;
-	Float UniformFloat() noexcept;
+	float UniformFloat() noexcept;
 
 private:
 

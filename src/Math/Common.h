@@ -1,79 +1,99 @@
-//
-// Copyright (c) Microsoft. All rights reserved.
-// This code is licensed under the MIT License (MIT).
-// THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
-// ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
-// IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
-// PURPOSE, MERCHANTABILITY, OR NON-INFRINGEMENT.
-//
-// Developed by Minigraph
-//
-// Author:  James Stanard 
-//
-
 #pragma once
 
-// #include <intrin.h>
-#define __forceinline inline 
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp> 
+#include <cassert>
 
 namespace Math
 {
-    template <typename T> __forceinline T AlignUpWithMask( T value, size_t mask )
+	static const float Pi = glm::pi<float>();
+	static const float PiOver2 = Pi/2;
+	static const float PiOver4 = Pi/4;
+	static const float InvPi = 1/Pi;
+	static const float Inv2Pi = 1/(2*Pi);
+	static const float Inv4Pi = 1/(4*Pi);
+	static const float Sqrt2 = glm::sqrt(2);
+
+    template <typename T> inline T AlignUpWithMask( T value, size_t mask )
     {
         return (T)(((size_t)value + mask) & ~mask);
     }
 
-    template <typename T> __forceinline T AlignDownWithMask( T value, size_t mask )
+    template <typename T> inline T AlignDownWithMask( T value, size_t mask )
     {
         return (T)((size_t)value & ~mask);
     }
 
-    template <typename T> __forceinline T AlignUp( T value, size_t alignment )
+    template <typename T> inline T AlignUp( T value, size_t alignment )
     {
         return AlignUpWithMask(value, alignment - 1);
     }
 
-    template <typename T> __forceinline T AlignDown( T value, size_t alignment )
+    template <typename T> inline T AlignDown( T value, size_t alignment )
     {
         return AlignDownWithMask(value, alignment - 1);
     }
 
-    template <typename T> __forceinline bool IsAligned( T value, size_t alignment )
+    template <typename T> inline bool IsAligned( T value, size_t alignment )
     {
         return 0 == ((size_t)value & (alignment - 1));
     }
 
-    template <typename T> __forceinline T DivideByMultiple( T value, size_t alignment )
+    template <typename T> inline T DivideByMultiple( T value, size_t alignment )
     {
         return (T)((value + alignment - 1) / alignment);
     }
 
-    template <typename T> __forceinline bool IsPowerOfTwo(T value)
+    template <typename T> inline bool IsPowerOfTwo(T value)
     {
         return 0 == (value & (value - 1));
     }
 
-    template <typename T> __forceinline bool IsDivisible(T value, T divisor)
+    template <typename T> inline bool IsDivisible(T value, T divisor)
     {
         return (value / divisor) * divisor == value;
     }
 
-    __forceinline uint8_t Log2(uint64_t value)
-    {
-    #if 0
-        unsigned long mssb; // most significant set bit
-        unsigned long lssb; // least significant set bit
+	inline float Log2(float value)
+	{
+		return glm::log2(value);
+	}
 
-        // If perfect power of two (only one set bit), return index of bit.  Otherwise round up
-        // fractional log by adding 1 to most signicant set bit's index.
-        if (_BitScanReverse64(&mssb, value) > 0 && _BitScanForward64(&lssb, value) > 0)
-            return uint8_t(mssb + (mssb == lssb ? 0 : 1));
-    #else
-        return 0;
-    #endif
+	inline uint8_t Log2(uint32_t value)
+	{
+	#if _WIN32
+        unsigned long lz;
+        _BitScanReverse(&lz, value);
+		return lz;
+	#else
+		return 31 - __builtin_clz(value);
+	#endif
+	}
+
+	inline uint8_t Log2(int32_t value)
+	{
+		assert(value >= 0);
+		return Log2(uint32_t(value));
+	}
+
+    inline uint8_t Log2(uint64_t value)
+    {
+	#if _WIN32
+        unsigned long lz;
+        _BitScanReverse64(&lz, value);
+		return lz;
+	#else
+		return 63 - __builtin_clzll(value);
+	#endif
     }
 
-    template <typename T> __forceinline T AlignPowerOfTwo(T value)
+	inline uint8_t Log2(int64_t value)
+	{
+		assert(value >= 0);
+		return Log2(uint64_t(value));
+	}
+
+    template <typename T> inline T AlignPowerOfTwo(T value)
     {
         return value == 0 ? 0 : 1 << Log2(value);
     }

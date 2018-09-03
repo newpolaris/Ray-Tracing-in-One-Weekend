@@ -52,8 +52,8 @@ namespace gamecore {
 	void glfw_framesize_callback(GLFWwindow* window, int width, int height);
 
     const uint32_t SHADOW_WIDTH = 1024;
-    const uint32_t WINDOW_WIDTH = 640;
-    const uint32_t WINDOW_HEIGHT = 320;
+    const uint32_t WINDOW_WIDTH = 640/2;
+    const uint32_t WINDOW_HEIGHT = 320/2;
 
 	int32_t m_WindowWidth = 0;
 	int32_t m_WindowHeight = 0;

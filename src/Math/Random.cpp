@@ -38,13 +38,13 @@ namespace {
 			m_Engine.seed(id);
 		}
 		
-		Float operator()() noexcept
+		float operator()() noexcept
 		{
 			return m_Dist(m_Engine);
 		}
 
 		std::mt19937 m_Engine;
-		std::uniform_real_distribution<Float> m_Dist;
+		std::uniform_real_distribution<float> m_Dist;
 	};
 
 	float RandMt19937()

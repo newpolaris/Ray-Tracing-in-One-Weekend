@@ -70,6 +70,7 @@ set(UNITTEST_SRC
 	test/aabb.cpp
 	test/string.cpp
 	test/random.cpp
+	test/common.cpp
 	src/Math/AABB.cpp
 	src/Math/Ray.cpp
 	src/Math/Random.cpp

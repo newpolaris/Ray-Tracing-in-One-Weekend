@@ -5,6 +5,7 @@ Ray Tracing
 2. edupt
 3. レイトレ合宿
 4. memoRANDOM
+5. kajo
 
 [reference]
 1. Ray Tracing in One Weekend
