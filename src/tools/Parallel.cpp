@@ -4,66 +4,101 @@
 #include <queue>
 #include <mutex>
 #include <future>
+#include <cassert>
 
-namespace 
+namespace parallel
 {
     using Task = std::function<void(void)>;
+    thread_local int thread_index = 0;
 
-    bool bStop = false;
+    bool bShutdown = false;
     std::mutex queue_mutex;
     std::queue<Task> tasks;
     std::vector<std::thread> workers;
     std::condition_variable cv;
+
+    static void workerfunc(int index);
 }
 
-void ParallelInit()
+static void parallel::workerfunc(int index)
 {
-    for (int i = 0; i < 4; i++)
-        workers.emplace_back(
-            [&]{
-                while (true)
-                {
-                    Task task;
-                    {
-                        std::unique_lock<std::mutex> lock(queue_mutex);
-                        cv.wait(lock, [&]{ return bStop || !tasks.empty(); });
-                        if (bStop && tasks.empty()) return;
-                        task = std::move(tasks.front());
-                        tasks.pop();
-                    }
-                    task();
-                }
-            });
+    thread_index = index;
+    while (!bShutdown)
+    {
+        Task task;
+        {
+            std::unique_lock<std::mutex> lock(queue_mutex);
+            cv.wait(lock, [&] { return bShutdown || !tasks.empty(); });
+            if (tasks.empty()) break;
+            task = std::move(tasks.front());
+            tasks.pop();
+        }
+        task();
+    }
 }
 
-void ParallelEnd()
+void parallel::startup()
+{
+    const int num_core = 4;
+    for (int i = 0; i < num_core; i++)
+        workers.emplace_back(workerfunc, i+1);
+}
+
+void parallel::shutdown()
 {
     {
         std::unique_lock<std::mutex> lock(queue_mutex);
-        bStop = true;
+        bShutdown = true;
     }
 
     cv.notify_all();
-    for (auto& t : workers)
-        if (t.joinable())
-            t.join();
+    for (std::thread& t : workers) t.join();
 }
 
-void ParallelFor(std::function<void(int64_t)> function, int64_t count)
+// github.com/progschj/ThreadPool
+std::future<void> parallel::enqueue(std::function<void(void)> function)
 {
-    ParallelInit();
-    if (count < 1)
+    auto task = std::make_shared<std::packaged_task<void()>>(function);
+    auto future = task->get_future();
+    std::unique_lock<std::mutex> lock(queue_mutex);
+    tasks.emplace([task]() {(*task)();});
+    cv.notify_one();
+    return future;
+}
+
+void parallel::loop(std::function<void(int64_t)> function, int64_t count, int chunksize)
+{
+    if (count < chunksize || workers.empty())
     {
         for (int64_t i = 0; i < count; i++)
             function(i);
         return;
     }
 
-    for (int64_t i = 0; i < count; i++)
+    std::vector<std::future<void>> futures;
+    int64_t n = count / chunksize;
+    for (int i = 0; i < n; i++)
     {
-        std::unique_lock<std::mutex> lock(queue_mutex);
-        tasks.emplace(std::bind(function, i));
-        cv.notify_one();
+        const int64_t index_start = i * chunksize;
+        const int64_t index_end = std::min(index_start + chunksize, count);
+        futures.emplace_back(enqueue(
+            [&, index_start, index_end]{
+                for (int64_t k = index_start; k < index_end; k++)
+                    function(k);
+            }));
     }
-    ParallelEnd();
+    for (auto& f : futures) f.get();
+}
+
+void parallel::loop(std::function<void(glm::uvec2)> function, glm::uvec2 count)
+{
+    int n = count.x * count.y;
+
+    std::vector<std::future<void>> futures;
+    for (int i = 0; i < n; i++)
+    {
+        glm::uvec2 pt(n % count.x, n / count.x);
+        futures.emplace_back(enqueue(std::bind(function, pt)));
+    }
+    for (auto& f : futures) f.get();
 }

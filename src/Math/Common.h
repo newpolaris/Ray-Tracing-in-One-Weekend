@@ -64,7 +64,7 @@ namespace Math
 	#if _WIN32
         unsigned long lz;
         _BitScanReverse(&lz, value);
-		return lz;
+		return uint8_t(lz);
 	#else
 		return 31 - __builtin_clz(value);
 	#endif
@@ -79,9 +79,12 @@ namespace Math
     inline uint8_t Log2(uint64_t value)
     {
 	#if _WIN32
-        unsigned long lz;
-        _BitScanReverse(&lz, value);
-		return lz;
+        unsigned long lz = 0;
+        if (_BitScanReverse(&lz, value >> 32))
+            lz += 32;
+        else
+            _BitScanReverse(&lz, value & 0xffffffff);
+		return uint8_t(lz);
 	#else
 		return 63 - __builtin_clzll(value);
 	#endif

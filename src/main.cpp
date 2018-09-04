@@ -341,8 +341,8 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 	lights.emplace_back(BuildShape<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, nullptr).get());
 	lights.emplace_back(BuildShape<Sphere>(glm::vec3(190.f, 90.f, 190.f), 90.f, nullptr).get());
 	auto lightSetPtr = std::make_shared<HitableSet>(lights);
-
-    ParallelFor([&](int64_t y)
+    parallel::startup();
+    parallel::loop([&](int64_t y)
     {
         for (int x = 0; x < width; x++)
         {
@@ -361,6 +361,7 @@ void test(std::vector<glm::vec4>& image, int width, int height)
         }
         printf("Process status: height %4d done\n", int(y));
     }, height);
+    parallel::shutdown();
 }
 
 void writeToPNG(std::vector<glm::vec4>& image, int width, int height)

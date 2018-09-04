@@ -71,10 +71,12 @@ set(UNITTEST_SRC
 	test/string.cpp
 	test/random.cpp
 	test/common.cpp
+    test/parallel.cpp
 	src/Math/AABB.cpp
 	src/Math/Ray.cpp
 	src/Math/Random.cpp
 	src/Math/RNG.cpp
+    src/tools/Parallel.cpp
 )
 
 add_executable(${APP_TARGET} ${SRC})
