@@ -73,7 +73,7 @@ float RNG::UniformFloat() noexcept
 #ifndef PBRT_HAVE_HEX_FP_CONSTANTS
     float f = float(UniformUInt32() * 2.3283064365386963e-10f);
 #else
-    float f = float(OneMinusEpsilon, Float(UniformUInt32() * 0x1p-32f);
+    float f = float(UniformUInt32() * 0x1p-32f);
 #endif
 	return f < OneMinusEpsilon ? f : OneMinusEpsilon;
 }

@@ -215,25 +215,6 @@ glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, const HitablePtr&
 	}
 }
 
-HitableList perlinSpheres()
-{
-	auto texLight = std::make_shared<ConstantTexture>(glm::vec3(4.f));
-    auto texPerlinNoise = std::make_shared<NoiseTexture>();
-	auto matLight = std::make_shared<DiffuseLight>(texLight);
-	auto matPerlinNoise = std::make_shared<Lambertian>(texPerlinNoise);
-	auto texEarth = std::make_shared<ImageTexture>("resources/Earth.jpg");
-	auto matEarth = std::make_shared<Lambertian>(texEarth);
-
-	HitableList world;
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, -1000, 0), 1000.f, matPerlinNoise));
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 2, 0), 2.0f, matEarth));
-	world.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 7, 0), 2.0f, matLight));
-	world.emplace_back(std::make_shared<RectXY>(3.f, 5.f, 1.f, 3.f, -2.f, matLight));
-	world.emplace_back(std::make_shared<RectXY>(3.f, 5.f, 1.f, 3.f, 5.f, matLight));
-
-	return world;
-}
-
 HitableList cornellBox()
 {
 	auto texRed = std::make_shared<ConstantTexture>(glm::vec3(0.65f, 0.05f, 0.05f));
@@ -271,57 +252,6 @@ HitableList cornellBox()
 	return world;
 }
 
-HitableList finalScene()
-{
-	const int nb = 20;
-
-    auto matWhite = std::make_shared<Lambertian>(std::make_shared<ConstantTexture>(glm::vec3(0.73f)));
-    auto matGround = std::make_shared<Lambertian>(std::make_shared<ConstantTexture>(glm::vec3(0.48, 0.83, 0.53)));
-
-    HitableList ground; 
-    for (int i = 0; i < nb; i++)
-    for (int j = 0; j < nb; j++)
-    {
-        float w = 100;
-        float x0 = -1000 + i*w;
-        float z0 = -1000 + j*w;
-        float y0 = 0;
-        float x1 = x0 + w;
-        float y1 = 100*(Math::BaseRandom() + 0.01f);
-        float z1 = z0 + w;
-        ground.emplace_back(std::make_shared<Box>(glm::vec3(x0, y0, z0), glm::vec3(x1, y1, z1), matGround));
-    }
-    auto bvhGround = std::make_shared<BvhNode>(ground, 0.f, 1.f);
-
-	auto texLight = std::make_shared<ConstantTexture>(glm::vec3(7.f));
-	auto matLight = std::make_shared<DiffuseLight>(texLight);
-
-	HitableList list;
-    list.push_back(bvhGround);
-	list.emplace_back(std::make_shared<RectXZ>(123.f, 423.f, 147.f, 412.f, 554.f, matLight));
-	glm::vec3 center(400, 400, 200);
-	list.emplace_back(std::make_shared<MovingSphere>(center, center + glm::vec3(30, 0, 0), 0.f, 1.f, 50.f, std::make_shared<Lambertian>(std::make_shared<ConstantTexture>(glm::vec3(0.7, 0.3, 0.1)))));
-	list.emplace_back(std::make_shared<Sphere>(glm::vec3(260, 150, 45), 50.f, std::make_shared<Dielectric>(1.5f)));
-	list.emplace_back(std::make_shared<Sphere>(glm::vec3(0, 150, 145), 50.f, std::make_shared<Metal>(std::make_shared<ConstantTexture>(glm::vec3(0.8, 0.8, 0.9)), 10.0f)));
-	auto smokeball = std::make_shared<Sphere>(glm::vec3(360, 150, 145), 70.f, std::make_shared<Dielectric>(1.5f));
-	list.emplace_back(smokeball);
-	list.emplace_back(std::make_shared<ConstantMedium>(smokeball, 0.02f, std::make_shared<ConstantTexture>(glm::vec3(0.2f, 0.4f, 0.9f))));
-	// global fog
-	list.emplace_back(std::make_shared<ConstantMedium>(
-				std::make_shared<Sphere>(glm::vec3(0.f), 5000.f, std::make_shared<Dielectric>(1.5f)),
-				0.0001f,
-				std::make_shared<ConstantTexture>(glm::vec3(1.f))));
-
-	auto texEarth = std::make_shared<ImageTexture>("resources/Earth.jpg");
-	auto matEarth = std::make_shared<Lambertian>(texEarth);
-	list.emplace_back(std::make_shared<Sphere>(glm::vec3(400, 200, 400), 100.f, matEarth));
-    auto texPerlinNoise = std::make_shared<NoiseTexture>();
-	auto matPerlinNoise = std::make_shared<Lambertian>(texPerlinNoise);
-	list.emplace_back(std::make_shared<Sphere>(glm::vec3(220, 280, 300), 80.f, matPerlinNoise));
-
-	return list;
-}
-
 void test(std::vector<glm::vec4>& image, int width, int height)
 {
 	const int NumSamples = 100;
@@ -341,6 +271,7 @@ void test(std::vector<glm::vec4>& image, int width, int height)
 	lights.emplace_back(BuildShape<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, nullptr).get());
 	lights.emplace_back(BuildShape<Sphere>(glm::vec3(190.f, 90.f, 190.f), 90.f, nullptr).get());
 	auto lightSetPtr = std::make_shared<HitableSet>(lights);
+	auto chunksize = height / 4;
     parallel::startup();
     parallel::loop([&](int64_t y)
     {
@@ -360,7 +291,7 @@ void test(std::vector<glm::vec4>& image, int width, int height)
             image[index] = c / float(NumSamples);
         }
         printf("Process status: height %4d done\n", int(y));
-    }, height);
+    }, height, chunksize);
     parallel::shutdown();
 }
 

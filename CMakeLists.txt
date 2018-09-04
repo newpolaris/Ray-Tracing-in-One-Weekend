@@ -72,6 +72,7 @@ set(UNITTEST_SRC
 	test/random.cpp
 	test/common.cpp
     test/parallel.cpp
+	test/bounds.cpp
 	src/Math/AABB.cpp
 	src/Math/Ray.cpp
 	src/Math/Random.cpp
