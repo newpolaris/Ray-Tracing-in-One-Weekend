@@ -73,11 +73,13 @@ set(UNITTEST_SRC
 	test/common.cpp
     test/parallel.cpp
 	test/bounds.cpp
+	test/memoryarena.cpp
 	src/Math/AABB.cpp
 	src/Math/Ray.cpp
 	src/Math/Random.cpp
 	src/Math/RNG.cpp
     src/tools/Parallel.cpp
+	src/tools/MemoryArena.cpp
 )
 
 add_executable(${APP_TARGET} ${SRC})
