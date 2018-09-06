@@ -9,8 +9,8 @@
 namespace parallel
 {
     using Task = std::function<void(void)>;
-    thread_local int thread_index = 0;
 
+    thread_local int thread_index = 0;
     const int num_core = 4;
 
     bool bShutdown = false;
@@ -20,6 +20,11 @@ namespace parallel
     std::condition_variable cv;
 
     static void workerfunc(int index);
+}
+
+int parallel::count()
+{
+    return std::max(1u, std::thread::hardware_concurrency());
 }
 
 static void parallel::workerfunc(int index)
@@ -80,10 +85,10 @@ void parallel::loop(std::function<void(int64_t)> function, int64_t count, int ch
         return;
     }
 
-    const int64_t n = count / chunksize;
+    const size_t n = (size_t)(count / chunksize);
     std::vector<std::future<void>> futures;
     futures.reserve(n);
-    for (int i = 0; i < n; i++)
+    for (size_t i = 0; i < n; i++)
     {
         const int64_t index_start = i * chunksize;
         const int64_t index_end = std::min(index_start + chunksize, count);

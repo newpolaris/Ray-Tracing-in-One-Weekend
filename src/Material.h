@@ -6,6 +6,7 @@
 #include <Math/Random.h>
 #include <Math/Scattering.h>
 #include <Hitable.h>
+#include <tools/Allocator.h>
 
 struct HitRecord;
 struct ScatterRecord
@@ -22,7 +23,7 @@ public:
 
 	virtual ~Material();
 	virtual bool scatter(const Math::Ray& r_in, const HitRecord& rec, glm::vec3& attenuation, Math::Ray& scattered) const { return false; }
-    virtual bool scatter(const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const { return false; }
+    virtual bool scatter(AreaAlloc& alloc, const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const { return false; }
     virtual float scatteringPdf(const Math::Ray& in, const HitRecord& rec, const Math::Ray& scattered) const { return 0.f; }
 	virtual glm::vec3 emitted(const Math::Ray& in, const HitRecord& rec) const;
 };
@@ -37,7 +38,7 @@ public:
 
 	virtual ~Lambertian();
 
-    virtual bool scatter(const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const override;
+    virtual bool scatter(AreaAlloc& alloc, const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const override;
     virtual float scatteringPdf(const Math::Ray& in, const HitRecord& rec, const Math::Ray& scattered) const override;
 
 private:
@@ -57,7 +58,7 @@ public:
 
 	virtual ~Metal();
 
-	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const override;
+    virtual bool scatter(AreaAlloc& alloc, const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const override;
 
 private:
 
@@ -73,7 +74,7 @@ public:
 
 	virtual ~Dielectric();
 
-	virtual bool scatter(const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const override
+    virtual bool scatter(AreaAlloc& alloc, const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const override
 	{
 		srec.pdf_ptr = nullptr;
 		srec.bSpecular = true;

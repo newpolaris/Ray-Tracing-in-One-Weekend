@@ -4,6 +4,9 @@
 
 namespace parallel
 {
+    extern thread_local int thread_index;
+
+    int count();
     void startup();
     void shutdown();
     void loop(std::function<void(int64_t)> function, int64_t count, int chunksize = 1);

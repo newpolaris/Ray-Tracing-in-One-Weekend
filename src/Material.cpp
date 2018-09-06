@@ -18,11 +18,11 @@ Lambertian::~Lambertian()
 {
 }
 
-bool Lambertian::scatter(const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const
+bool Lambertian::scatter(AreaAlloc& alloc, const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const 
 {
 	srec.bSpecular = false;
 	srec.attenuation = m_Albedo->value(rec.u, rec.v, rec.position);
-	srec.pdf_ptr = std::make_shared<CosinePdf>(rec.normal);
+	srec.pdf_ptr = std::allocate_shared<CosinePdf>(alloc, rec.normal);
     return true;
 }
 
@@ -39,7 +39,7 @@ Metal::~Metal()
 {
 }
 
-bool Metal::scatter(const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const
+bool Metal::scatter(AreaAlloc& alloc, const Math::Ray& in, const HitRecord& rec, ScatterRecord& srec) const
 {
     glm::vec3 reflected = glm::reflect(in.direction(), rec.normal);
 	glm::vec3 dir = glm::normalize(reflected + m_Fuzz*Math::randomUnitSphere());

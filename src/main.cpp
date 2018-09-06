@@ -31,6 +31,8 @@
 #include <Rotate.h>
 #include <Pdf.h>
 #include <ConstantMedium.h>
+#include <tools/Memory.h> 
+#include <tools/Allocator.h>
 
 namespace 
 {
@@ -86,7 +88,7 @@ static ShapeBuilder BuildShape(Args... args)
 	return ShapeBuilder(std::make_shared<T>(std::forward<Args>(args)...));
 }
 
-glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, const HitablePtr& light_shape, int depth) 
+glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, const HitablePtr& light_shape, AreaAlloc& alloc, int depth) 
 {
 	const float RAY_MIN = 1e-3f;
 	const float RAY_MAX = 1e8f;
@@ -100,21 +102,21 @@ glm::vec3 color(const Math::Ray& ray, const HitablePtr& world, const HitablePtr&
         return emitted;
 
 	ScatterRecord srec = { 0 };
-    if (!hrec.material->scatter(ray, hrec, srec))
+    if (!hrec.material->scatter(alloc, ray, hrec, srec))
         return emitted;
 
 	if (srec.bSpecular)
-		return srec.attenuation * color(srec.specular_ray, world, light_shape, depth + 1);
+		return srec.attenuation * color(srec.specular_ray, world, light_shape, alloc, depth + 1);
 	else
 	{
-		auto plight = std::make_shared<HitablePdf>(light_shape, hrec.position);
+		auto plight = std::allocate_shared<HitablePdf>(alloc, light_shape, hrec.position);
 		MixturePdf p(plight, srec.pdf_ptr);
 		Math::Ray scattered = Math::Ray(hrec.position, p.generate(), ray.time());
 		float pdf_value = p.probability(scattered.direction());
 
 		if (pdf_value <= 0.f) return emitted;
 
-		auto source = color(scattered, world, light_shape, depth + 1);
+		auto source = color(scattered, world, light_shape, alloc, depth + 1);
 		auto scatteringPdf = hrec.material->scatteringPdf(ray, hrec, scattered);
 
 		return emitted + (srec.attenuation * source * scatteringPdf / pdf_value);
@@ -170,10 +172,13 @@ void render(std::vector<glm::vec4>& image, int width, int height)
 	lights.emplace_back(BuildShape<RectXZ>(213.f, 343.f, 227.f, 332.f, 554.f, nullptr).get());
 	lights.emplace_back(BuildShape<Sphere>(glm::vec3(190.f, 90.f, 190.f), 90.f, nullptr).get());
 	auto lightSetPtr = std::make_shared<HitableSet>(lights);
-	auto chunksize = height / 4;
+	auto chunksize = height / parallel::count();
+    std::vector<MemoryArena> arenaList(parallel::count());
     parallel::startup();
     parallel::loop([&](int64_t y)
     {
+        AreaAlloc alloc(&arenaList[parallel::thread_index]);
+
         for (int x = 0; x < width; x++)
         {
             glm::vec4 c(0.f);
@@ -183,11 +188,13 @@ void render(std::vector<glm::vec4>& image, int width, int height)
                 float v = float(y + Math::BaseRandom()) / height;
 
                 auto ray = camera.ray(u, v);
-                glm::vec3 cc = color(ray, world, lightSetPtr, 0);
+                glm::vec3 cc = color(ray, world, lightSetPtr, alloc, 0);
                 c += glm::vec4(de_nan(cc), 1.f);
             }
             int index = int(y*width + x);
             image[index] = c / float(NumSamples);
+
+            arenaList[parallel::thread_index].clear();
         }
         printf("Process status: height %4d done\n", int(y));
     }, height, chunksize);

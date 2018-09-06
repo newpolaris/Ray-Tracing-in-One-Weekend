@@ -29,7 +29,8 @@ TEST(MemoryArena, placement)
 
 TEST(MemoryArena, allocator)
 {
-    AreaAllocator<int> alloc;
+    MemoryArena arena;
+    AreaAllocator<int> alloc(&arena);
     std::shared_ptr<int> foo = std::allocate_shared<int>(alloc, 10);
     EXPECT_EQ(*foo, 10);
 
@@ -39,6 +40,6 @@ TEST(MemoryArena, allocator)
     std::shared_ptr<Temp> foo2 = std::allocate_shared<Temp>(alloc, "Hello");
 	EXPECT_EQ(foo2->print(), "Hello");
 
-    AreaAllocator<Temp> allocT;
+    AreaAllocator<Temp> allocT(&arena);
     std::vector<int, AreaAllocator<int>> hello2(10, 1, allocT);
 }

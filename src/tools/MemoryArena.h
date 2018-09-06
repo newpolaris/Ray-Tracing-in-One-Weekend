@@ -42,6 +42,7 @@ public:
     {
         for (auto& b : used_large_block_) delete[] b;
         used_large_block_.clear();
+
         free_block_.insert(std::end(free_block_), std::begin(used_block_), std::end(used_block_));
         used_block_.clear();
         current_allocsize_ = 0;
