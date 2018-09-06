@@ -18,7 +18,6 @@ TEST(Parallel, loop1D)
 
 }
 
-#if 0
 TEST(Parallel, loop2D)
 {
     parallel::startup();
@@ -29,4 +28,3 @@ TEST(Parallel, loop2D)
 
     parallel::shutdown();
 }
-#endif

@@ -11,6 +11,8 @@ namespace parallel
     using Task = std::function<void(void)>;
     thread_local int thread_index = 0;
 
+    const int num_core = 4;
+
     bool bShutdown = false;
     std::mutex queue_mutex;
     std::queue<Task> tasks;
@@ -39,7 +41,7 @@ static void parallel::workerfunc(int index)
 
 void parallel::startup()
 {
-    const int num_core = 4;
+    bShutdown = false;
     for (int i = 0; i < num_core; i++)
         workers.emplace_back(workerfunc, i+1);
 }
@@ -53,6 +55,9 @@ void parallel::shutdown()
 
     cv.notify_all();
     for (std::thread& t : workers) t.join();
+
+    tasks.swap(std::queue<Task>());
+    workers.clear();
 }
 
 // github.com/progschj/ThreadPool
@@ -75,8 +80,9 @@ void parallel::loop(std::function<void(int64_t)> function, int64_t count, int ch
         return;
     }
 
+    const int64_t n = count / chunksize;
     std::vector<std::future<void>> futures;
-    int64_t n = count / chunksize;
+    futures.reserve(n);
     for (int i = 0; i < n; i++)
     {
         const int64_t index_start = i * chunksize;
@@ -92,9 +98,10 @@ void parallel::loop(std::function<void(int64_t)> function, int64_t count, int ch
 
 void parallel::loop(std::function<void(glm::uvec2)> function, glm::uvec2 count)
 {
-    int n = count.x * count.y;
+    const int n = count.x * count.y;
 
     std::vector<std::future<void>> futures;
+    futures.reserve(n);
     for (int i = 0; i < n; i++)
     {
         glm::uvec2 pt(n % count.x, n / count.x);
