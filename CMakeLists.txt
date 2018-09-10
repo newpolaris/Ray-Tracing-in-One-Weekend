@@ -16,6 +16,7 @@ find_package(OpenGL REQUIRED)
 set(UseGLI TRUE)
 set(UseZlib TRUE)
 set(UseGTest TRUE)
+set(UseGLog TRUE)
 
 # Compile external dependencies 
 add_subdirectory(external)
@@ -41,6 +42,8 @@ include_directories(
 	external/bullet-2.81-rev2613/src/
 	external/gli/
 	external/zlib/
+	external/glog/src/
+	${CMAKE_BINARY_DIR}/external/glog/
 	.
 )
 
@@ -61,32 +64,49 @@ add_definitions(
 	-D_CRT_SECURE_NO_WARNINGS
 )
 
+###########################################################################
+# Check for various C++11 features and set preprocessor variables or
+# define workarounds.
+
+INCLUDE (CheckCXXSourceCompiles)
+INCLUDE (CheckCXXSourceRuns)
+
+CHECK_CXX_SOURCE_COMPILES( "
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+int main()
+{
+	int fd = open(\"foo\", O_RDONLY);
+	struct stat s;
+	fstat(fd, &s);
+	size_t len = s.st_size;
+	void *ptr = mmap(0, len, PROT_READ, MAP_FILE | MAP_SHARED, fd, 0);
+	munmap(ptr, len);   
+}
+" HAVE_MMAP )
+if ( HAVE_MMAP )
+	add_definitions( -D HAVE_MMAP )
+endif ()
+###########################################################################
+
 file(GLOB GLSW external/glsw/*.c external/glsw/*.h)
 add_library(glsw ${GLSW})
 
 file(GLOB_RECURSE SRC src/*)
+list(REMOVE_ITEM SRC
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp)
 
-set(UNITTEST_SRC 
-	test/aabb.cpp
-	test/string.cpp
-	test/random.cpp
-	test/common.cpp
-    test/parallel.cpp
-	test/bounds.cpp
-	test/memoryarena.cpp
-	src/Math/AABB.cpp
-	src/Math/Ray.cpp
-	src/Math/Random.cpp
-	src/Math/RNG.cpp
-    src/tools/Parallel.cpp
-	src/tools/MemoryArena.cpp
-)
+add_library(ray STATIC ${SRC})
 
-add_executable(${APP_TARGET} ${SRC})
-target_link_libraries(${APP_TARGET} glsw ${ALL_LIBS})
+file(GLOB UNITTEST_SRC test/*.cpp)
+
+add_executable(${APP_TARGET} src/main.cpp)
+target_link_libraries(${APP_TARGET} ray glsw ${ALL_LIBS})
 
 add_executable(${UNITTEST_TARGET} ${UNITTEST_SRC})
-target_link_libraries(${UNITTEST_TARGET} ${ALL_LIBS} gtest gtest_main)
+target_link_libraries(${UNITTEST_TARGET} ${ALL_LIBS} ray gtest gtest_main)
 add_test(${UNITTEST_TARGET} ${UNITTEST_TARGET})
 
 # Xcode and Visual working directories

@@ -159,3 +159,18 @@ if (UseGTest)
 	enable_testing()
 	include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 endif(UseGTest)
+
+### GLog ###
+if (UseGLog)
+	set(WITH_GFLAGS OFF CACHE BOOL "Use gflags")
+	set(BUILD_SHARED_LIBS OFF CACHE BOOL " " FORCE)
+	IF(WIN32)
+	  add_definitions( -D GOOGLE_GLOG_DLL_DECL= )
+	ENDIF()
+	add_subdirectory(glog)
+	set_property(TARGET glog logging_unittest demangle_unittest utilities_unittest stl_logging_unittest PROPERTY FOLDER "ext")
+	include_directories(glog/src)
+
+###########################################################################
+
+endif(UseGLog)

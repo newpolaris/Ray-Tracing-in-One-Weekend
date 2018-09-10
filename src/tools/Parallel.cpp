@@ -61,10 +61,9 @@ void parallel::shutdown()
     cv.notify_all();
     for (std::thread& t : workers) t.join();
 
-    tasks.swap(std::queue<Task>());
+	std::queue<Task>().swap(tasks);
     workers.clear();
 }
-
 // github.com/progschj/ThreadPool
 std::future<void> parallel::enqueue(std::function<void(void)> function)
 {
