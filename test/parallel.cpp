@@ -28,3 +28,17 @@ TEST(Parallel, loop2D)
 
     parallel::shutdown();
 }
+
+TEST(Parallel, DoNothing) {
+    parallel::startup();
+
+    std::atomic<int> counter{0};
+	parallel::loop([&](int64_t) { ++counter; }, 0);
+    EXPECT_EQ(0, counter);
+
+    counter = 0;
+    parallel::loop([&](glm::uvec2 p) { ++counter; }, glm::uvec2(0, 0));
+    EXPECT_EQ(0, counter);
+
+    parallel::shutdown();
+}

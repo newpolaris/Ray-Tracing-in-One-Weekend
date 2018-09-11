@@ -2,8 +2,12 @@
 
 #include <vector>
 #include <string>
+#include <initializer_list>
+#include <fstream>
 #include <gtest/gtest.h>
 #include <core/parser.h>
+
+static std::string inTestDir(const std::string &path) { return path; }
 
 static std::vector<std::string> extract(Tokenizer *t)
 {
@@ -40,4 +44,89 @@ TEST(Parser, TokenizerBasics)
 		ASSERT_TRUE(t.get() != nullptr);
 		checkTokens(t.get(), {"Shape", "\"sphere\"", "\"float radius\"", "[", "1", "]"});
 	}
+
+    {
+        auto t = Tokenizer::CreateFromString("Shape \"sphere\"\n\"float radius\" [1]", err);
+        ASSERT_TRUE(t.get() != nullptr);
+        checkTokens(t.get(), {"Shape", "\"sphere\"", "\"float radius\"", "[", "1", "]"});
+    }
+
+    {
+        auto t = Tokenizer::CreateFromString(R"(
+Shape"sphere" # foo bar [
+"float radius\"" 1)", err);
+        ASSERT_TRUE(t.get() != nullptr);
+        checkTokens(t.get(), {"Shape", "\"sphere\"", "# foo bar [", R"("float radius"")", "1"});
+    }
+}
+
+TEST(Parser, TokenizerErrors) {
+    {
+        bool gotError = false;
+        auto err = [&](const char *err) {
+            gotError = !strcmp(err, "premature EOF");
+        };
+        auto t = Tokenizer::CreateFromString("Shape\"sphere\"\t\t # foo bar\n\"float radius", err);
+        ASSERT_TRUE(t.get() != nullptr);
+        extract(t.get());
+        EXPECT_TRUE(gotError);
+    }
+
+    {
+        bool gotError = false;
+        auto err = [&](const char *err) {
+            gotError = !strcmp(err, "premature EOF");
+        };
+        auto t = Tokenizer::CreateFromString("Shape\"sphere\"\t\t # foo bar\n\"float radius", err);
+        ASSERT_TRUE(t.get() != nullptr);
+        extract(t.get());
+        EXPECT_TRUE(gotError);
+    }
+
+    {
+        bool gotError = false;
+        auto err = [&](const char *err) {
+            gotError = !strcmp(err, "premature EOF");
+        };
+        auto t = Tokenizer::CreateFromString("Shape\"sphere\"\t\t # foo bar\n\"float radius\\", err);
+        ASSERT_TRUE(t.get() != nullptr);
+        extract(t.get());
+        EXPECT_TRUE(gotError);
+    }
+
+    {
+        bool gotError = false;
+        auto err = [&](const char *err) {
+            gotError = !strcmp(err, "unterminated string");
+        };
+        auto t = Tokenizer::CreateFromString("Shape\"sphere\"\t\t # foo bar\n\"float radius\n\" 5", err);
+        ASSERT_TRUE(t.get() != nullptr);
+        extract(t.get());
+        EXPECT_TRUE(gotError);
+    }
+}
+
+TEST(Parser, TokenizeFile) {
+    std::string filename = inTestDir("test.tok");
+    std::ofstream out(filename);
+    out << R"(
+WorldBegin # hello
+Integrator "deep" "float density" [ 2 2.66612 -5e-51]
+)";
+    out.close();
+    ASSERT_TRUE(out.good());
+
+    auto err = [](const char *err) {
+        EXPECT_TRUE(false) << "Unexpected error: " << err;
+    };
+	// Windows won't let us remove the file on disk if we hold on to a mapping view.
+	// So enclose the tokenizer in a scope so that it releases any file mapping view before the remove.
+	{
+		auto t = Tokenizer::CreateFromFile(filename, err);
+		ASSERT_TRUE(t.get() != nullptr);
+		checkTokens(t.get(), { "WorldBegin", "# hello", "Integrator", "\"deep\"", "\"float density\"",
+			"[", "2", "2.66612", "-5e-51", "]" });
+	}
+
+    EXPECT_EQ(0, remove(filename.c_str()));
 }

@@ -1,6 +1,9 @@
 #pragma once
 
-#include <string>
+#include <core/core.h>
 
-std::string DirectoryContaining(const std::string& filename);
+bool IsAbsolutePath(const std::string &filename);
+std::string AbsolutePath(const std::string &filename);
+std::string ResolveFilename(const std::string &filename);
+std::string DirectoryContaining(const std::string &filename);
 void SetSearchDirectory(const std::string& dirname);

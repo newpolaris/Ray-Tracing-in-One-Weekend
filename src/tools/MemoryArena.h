@@ -80,6 +80,8 @@ public:
         T* mem = (T*)allocate(num * sizeof(T));
         for (size_t i = 0; i < num; i++)
             new (&mem[i]) T(std::forward<Args>(args)...);
+
+        return mem;
 	}
 
 	void deallocate(void*) noexcept {}

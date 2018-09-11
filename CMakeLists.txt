@@ -50,10 +50,11 @@ include_directories(
 set(ALL_LIBS
 	${OPENGL_LIBRARY}
 	glfw
-	GLEW_1130
-	imgui
+	glog
 	gli
+	imgui
 	zlibstatic
+	GLEW_1130
 )
 
 add_definitions(
