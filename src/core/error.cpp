@@ -4,6 +4,8 @@
 #include <stdarg.h>
 #include <tools/stringprint.h>
 
+namespace pbrt {
+
 // Error Reporting Functions
 template <typename... Args>
 static std::string StringVaprintf(const std::string &fmt, va_list args) {
@@ -59,4 +61,6 @@ void Error(const char *format, ...) {
     va_start(args, format);
     processError(parserLoc, format, args, "Error");
     va_end(args);
+}
+
 }

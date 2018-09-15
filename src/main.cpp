@@ -5,6 +5,8 @@
 
 int main(int argc, char *argv[])
 {
+    using namespace pbrt;
+
     google::InitGoogleLogging(argv[0]);
     FLAGS_stderrthreshold = 1; // Warning and above.
 

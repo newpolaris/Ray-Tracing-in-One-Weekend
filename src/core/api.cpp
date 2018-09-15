@@ -6,6 +6,8 @@
 #include <core/error.h>
 #include <core/transform.h>
 
+namespace pbrt {
+
 // API Global Variables
 Options PbrtOptions;
 
@@ -152,3 +154,5 @@ void pbrtLookAt(Float ex, Float ey, Float ez, Float lx, Float ly, Float lz,
             catIndentCount, "", ex, ey, ez, catIndentCount + 8, "", lx, ly, lz,
             catIndentCount + 8, "", ux, uy, uz);
 }
+
+} // namespace pbrt {

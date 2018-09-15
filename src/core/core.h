@@ -20,7 +20,7 @@
 // Global Macros
 #define ALLOCA(TYPE, COUNT) (TYPE *) alloca((COUNT) * sizeof(TYPE))
 
-using Float = float;
+namespace pbrt {
 
 class Scene;
 class Integrator;
@@ -68,3 +68,5 @@ struct Options
 
 extern Options PbrtOptions;
 class TextureParams;
+
+} // namespace pbrt

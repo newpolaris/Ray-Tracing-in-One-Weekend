@@ -25,6 +25,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "paramset.h"
 
+namespace pbrt {
+
 void ParamSet::AddFloat(const std::string& name,
                         std::unique_ptr<float[]> values, int nValues)
 {
@@ -94,3 +96,5 @@ void ParamSet::Print(int indent) const {
     printItems("integer", indent, ints);
     printItems("float", indent, floats);
 }
+
+} // namespace pbrt {

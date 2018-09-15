@@ -7,6 +7,8 @@
 #include <gtest/gtest.h>
 #include <core/parser.h>
 
+using namespace pbrt;
+
 static std::string inTestDir(const std::string &path) { return path; }
 
 static std::vector<std::string> extract(Tokenizer *t)

@@ -29,6 +29,8 @@
 #include <memory>
 #include <functional>
 
+namespace pbrt {
+
 // Loc represents a position in a file being parsed.
 struct Loc {
 	Loc() = default;
@@ -153,3 +155,5 @@ private:
 };
 
 void pbrtParseFile(std::string filename);
+
+}

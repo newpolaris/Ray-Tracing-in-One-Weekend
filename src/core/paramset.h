@@ -29,6 +29,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "fileutil.h"
 #include <map>
 
+namespace pbrt {
+
 // ParamSet Declarations
 class ParamSet
 {
@@ -73,3 +75,6 @@ template <typename T>
 ParamSetItem<T>::ParamSetItem(const std::string &name, std::unique_ptr<T[]> v,
                               int nValues)
     : name(name), values(std::move(v)), nValues(nValues) {}
+
+
+}

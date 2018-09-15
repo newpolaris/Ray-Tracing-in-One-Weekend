@@ -40,6 +40,8 @@
 #include <core/paramset.h>
 #include <tools/MemoryArena.h>
 
+namespace pbrt {
+
 Loc *parserLoc = nullptr;
 
 static std::string toString(string_view s) {
@@ -554,4 +556,6 @@ void pbrtParseFile(std::string filename)
 		Tokenizer::CreateFromFile(filename, tokError);
 	if (!t) return;
 	parse(std::move(t));
+}
+
 }
