@@ -26,6 +26,8 @@
 
 #include "core.h"
 
+void pbrtInit(const Options &opt);
+void pbrtCleanup();
 void pbrtPixelFilter(const std::string &name, const ParamSet &params);
 void pbrtFilm(const std::string &type, const ParamSet &params);
 void pbrtSampler(const std::string &name, const ParamSet &params);

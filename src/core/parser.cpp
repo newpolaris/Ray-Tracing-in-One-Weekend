@@ -33,6 +33,7 @@
 #elif defined(IS_WINDOW)
 #include <windows.h>  // Windows file mapping API
 #endif
+#include <core/error.h>
 #include <core/api.h>
 #include <core/fileutil.h>
 #include <core/spectrum.h>
@@ -48,7 +49,7 @@ static std::string toString(string_view s) {
 static char decodeEscaped(int ch) {
     switch (ch) {
     case EOF:
-        // Error("premature EOF after character escape '\\'");
+        Error("premature EOF after character escape '\\'");
         exit(1);
     case 'b':
         return '\b';
@@ -67,7 +68,7 @@ static char decodeEscaped(int ch) {
     case '\"':
         return '\"';
     default:
-        // Error("unexpected escaped character \"%c\"", ch);
+        Error("unexpected escaped character \"%c\"", ch);
         exit(1);
     }
     return 0;  // NOTREACHED
@@ -88,7 +89,7 @@ static double parseNumber(string_view str) {
 
 static string_view dequoteString(string_view str) {
     if (!isQuotedString(str)) {
-        // Error("\"%s\": expected quoted string", toString(str).c_str());
+        Error("\"%s\": expected quoted string", toString(str).c_str());
         exit(1);
     }
 
@@ -141,7 +142,7 @@ static bool lookupType(const std::string &decl, int *type, std::string &sname) {
 
     auto typeBegin = skipSpace(decl.begin());
     if (typeBegin == decl.end()) {
-        // Error("Parameter \"%s\" doesn't have a type declaration?!", decl.c_str());
+        Error("Parameter \"%s\" doesn't have a type declaration?!", decl.c_str());
         return false;
     }
 
@@ -157,7 +158,7 @@ static bool lookupType(const std::string &decl, int *type, std::string &sname) {
 
     auto nameBegin = skipSpace(typeEnd);
     if (nameBegin == decl.end()) {
-        // Error("Unable to find parameter name from \"%s\"", decl.c_str());
+        Error("Unable to find parameter name from \"%s\"", decl.c_str());
         return false;
     }
     auto nameEnd = skipToSpace(nameBegin);
@@ -478,7 +479,7 @@ static void parse(std::unique_ptr<Tokenizer> t)
 
 
     auto syntaxError = [&](string_view tok) {
-        // Error("Unexpected token: %s", toString(tok).c_str());
+        Error("Unexpected token: %s", toString(tok).c_str());
         exit(1);
     };
 
@@ -506,7 +507,7 @@ static void parse(std::unique_ptr<Tokenizer> t)
                     printf("%*sInclude \"%s\"\n", catIndentCount, "", filename.c_str());
                 else {
                     filename = AbsolutePath(ResolveFilename(filename));
-                    auto tokError = [](const char *msg) { /*Error("%s", msg);*/ };
+                    auto tokError = [](const char *msg) { Error("%s", msg); };
                     std::unique_ptr<Tokenizer> tinc =
                         Tokenizer::CreateFromFile(filename, tokError);
                     if (tinc) {

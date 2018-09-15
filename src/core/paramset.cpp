@@ -40,6 +40,26 @@ bool ParamSet::EraseFloat(const std::string& name)
     return false;
 }
 
+float ParamSet::FindOneFloat(const std::string &name, float d) const {
+    for (const auto &f : floats)
+        if (f->name == name && f->nValues == 1) {
+            f->lookedUp = true;
+            return f->values[0];
+        }
+    return d;
+}
+
+const float *ParamSet::FindFloat(const std::string &name, int *n) const {
+    for (const auto &f : floats)
+        if (f->name == name) {
+            *n = f->nValues;
+            f->lookedUp = true;
+            return f->values.get();
+        }
+    return nullptr;
+}
+
+
 static int print(int i) { return printf("%d ", i); }
 static int print(bool v) {
     return v ? printf("\"true\" ") : printf("\"false\" ");

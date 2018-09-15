@@ -38,6 +38,8 @@ struct Loc {
 	int line = 1, column = 0;
 };
 
+// If not nullptr, stores the current file location of the parser.
+extern Loc *parserLoc;
 
 // Reimplement enough of absl/std::string_view as needed for the below
 class string_view {

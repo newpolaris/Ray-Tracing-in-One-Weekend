@@ -33,6 +33,8 @@
 #include <ConstantMedium.h>
 #include <tools/Memory.h> 
 #include <tools/Allocator.h>
+#include <glog/logging.h>
+#include <core/api.h>
 
 namespace 
 {
@@ -239,11 +241,14 @@ void writeToPPM(std::vector<glm::vec4>& image, int width, int height)
 	fclose(pFile);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
-	std::vector<glm::vec4> image(width*height, glm::vec4(0.f));
+    google::InitGoogleLogging(argv[0]);
+    FLAGS_stderrthreshold = 1; // Warning and above.
 
-	render(image, width, height);
-	writeToPNG(image, width, height);
+    Options options;
+    pbrtInit(options);
+    pbrtCleanup();
+
 	return 0;
 }

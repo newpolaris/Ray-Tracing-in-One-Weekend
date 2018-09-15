@@ -34,8 +34,7 @@ class BRDF;
 class BTDF;
 class BSDF;
 class Material;
-template <typename T>
-class Texture;
+// template <typename T> class Texture;
 class Medium;
 class MediumInteraction;
 struct MediumInterface;

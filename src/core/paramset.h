@@ -41,6 +41,9 @@ public:
 
     bool EraseFloat(const std::string& name);
 
+    float FindOneFloat(const std::string &name, float d) const;
+    const float *FindFloat(const std::string &name, int *n) const;
+
     void ReportUnused() const;
     void Clear();
     std::string ToString() const;

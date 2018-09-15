@@ -3,6 +3,7 @@
 #include "light.h"
 #include <map>
 #include <stdio.h>
+#include <core/error.h>
 
 // API Global Variables
 Options PbrtOptions;
@@ -45,11 +46,32 @@ struct RenderOptions {
     bool haveScatteringMedia = false;
 };
 
+struct GraphicsState {
+    // Graphis State Tethods
+    GraphicsState() {}
+};
+
 // API Static Data
 enum class APIState { Uninitialized, OptionsBlock, WorldBlock };
 static APIState currentApiState = APIState::Uninitialized;
 static std::unique_ptr<RenderOptions> renderOptions;
+static GraphicsState graphicsState;
+static std::vector<GraphicsState> pushedGraphicsStates;
 int catIndentCount = 0;
+
+void pbrtInit(const Options &opt) {
+    PbrtOptions = opt;
+    // API Initialization
+    if (currentApiState != APIState::Uninitialized)
+        Error("pbrtInit() has already been called.");
+    currentApiState = APIState::OptionsBlock;
+    renderOptions.reset(new RenderOptions());
+    graphicsState = GraphicsState();
+    catIndentCount = 0;
+}
+
+void pbrtCleanup() {
+}
 
 void pbrtAccelerator(const std::string& name, const ParamSet& params)
 {
@@ -63,3 +85,4 @@ void pbrtAccelerator(const std::string& name, const ParamSet& params)
         printf("\n");
     }
 }
+
