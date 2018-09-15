@@ -4,6 +4,7 @@
 #include <map>
 #include <stdio.h>
 #include <core/error.h>
+#include <core/transform.h>
 
 // API Global Variables
 Options PbrtOptions;
@@ -51,13 +52,52 @@ struct GraphicsState {
     GraphicsState() {}
 };
 
+
 // API Static Data
 enum class APIState { Uninitialized, OptionsBlock, WorldBlock };
 static APIState currentApiState = APIState::Uninitialized;
+static uint32_t activeTransformBits = AllTransformsBits;
 static std::unique_ptr<RenderOptions> renderOptions;
 static GraphicsState graphicsState;
 static std::vector<GraphicsState> pushedGraphicsStates;
 int catIndentCount = 0;
+
+// API Macros
+#define VERIFY_INITIALIZED(func)                           \
+    if (!(PbrtOptions.cat || PbrtOptions.toPly) &&           \
+        currentApiState == APIState::Uninitialized) {        \
+        Error(                                             \
+            "pbrtInit() must be before calling \"%s()\". " \
+            "Ignoring.",                                   \
+            func);                                         \
+        return;                                            \
+    } else /* swallow trailing semicolon */
+#define VERIFY_OPTIONS(func)                             \
+    VERIFY_INITIALIZED(func);                            \
+    if (!(PbrtOptions.cat || PbrtOptions.toPly) &&       \
+        currentApiState == APIState::WorldBlock) {       \
+        Error(                                           \
+            "Options cannot be set inside world block; " \
+            "\"%s\" not allowed.  Ignoring.",            \
+            func);                                       \
+        return;                                          \
+    } else /* swallow trailing semicolon */
+#define VERIFY_WORLD(func)                                   \
+    VERIFY_INITIALIZED(func);                                \
+    if (!(PbrtOptions.cat || PbrtOptions.toPly) &&           \
+        currentApiState == APIState::OptionsBlock) {         \
+        Error(                                               \
+            "Scene description must be inside world block; " \
+            "\"%s\" not allowed. Ignoring.",                 \
+            func);                                           \
+        return;                                              \
+    } else /* swallow trailing semicolon */
+
+#define FOR_ACTIVE_TRANSFORMS(expr)           \
+    for (int i = 0; i < MaxTransforms; ++i)   \
+        if (activeTransformBits & (1 << i)) { \
+            expr                              \
+        }
 
 void pbrtInit(const Options &opt) {
     PbrtOptions = opt;
@@ -75,7 +115,7 @@ void pbrtCleanup() {
 
 void pbrtAccelerator(const std::string& name, const ParamSet& params)
 {
-    // VERIFY_OPTIONS("Accelerator");
+    VERIFY_OPTIONS("Accelerator");
     renderOptions->AcceleratorName = name;
     renderOptions->AcceleratorParams = params;
     if (PbrtOptions.cat || PbrtOptions.toPly)
@@ -86,3 +126,29 @@ void pbrtAccelerator(const std::string& name, const ParamSet& params)
     }
 }
 
+void pbrtIntegrator(const std::string &name, const ParamSet &params) {
+    VERIFY_OPTIONS("Integrator");
+    renderOptions->IntegratorName = name;
+    renderOptions->IntegratorParams = params;
+    if (PbrtOptions.cat || PbrtOptions.toPly) {
+        printf("%*sIntegrator \"%s\" ", catIndentCount, "", name.c_str());
+        params.Print(catIndentCount);
+        printf("\n");
+    }
+}
+
+void pbrtLookAt(Float ex, Float ey, Float ez, Float lx, Float ly, Float lz,
+                Float ux, Float uy, Float uz) {
+    VERIFY_INITIALIZED("LookAt");
+    /*
+    Transform lookAt =
+        LookAt(Point3f(ex, ey, ez), Point3f(lx, ly, lz), Vector3f(ux, uy, uz));
+    FOR_ACTIVE_TRANSFORMS(curTransform[i] = curTransform[i] * lookAt;);
+    */
+    if (PbrtOptions.cat || PbrtOptions.toPly)
+        printf(
+            "%*sLookAt %.9g %.9g %.9g\n%*s%.9g %.9g %.9g\n"
+            "%*s%.9g %.9g %.9g\n",
+            catIndentCount, "", ex, ey, ez, catIndentCount + 8, "", lx, ly, lz,
+            catIndentCount + 8, "", ux, uy, uz);
+}

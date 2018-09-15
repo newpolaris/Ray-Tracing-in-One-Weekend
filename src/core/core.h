@@ -20,6 +20,8 @@
 // Global Macros
 #define ALLOCA(TYPE, COUNT) (TYPE *) alloca((COUNT) * sizeof(TYPE))
 
+using Float = float;
+
 class Scene;
 class Integrator;
 class Camera;
@@ -34,13 +36,19 @@ class BRDF;
 class BTDF;
 class BSDF;
 class Material;
-// template <typename T> class Texture;
+template <typename T> 
+class Texture;
 class Medium;
 class MediumInteraction;
 struct MediumInterface;
 class ParamSet;
 template <typename T>
 struct ParamSetItem;
+#ifdef PBRT_FLOAT_AS_DOUBLE
+typedef double Float;
+#else
+typedef float Float;
+#endif  // PBRT_FLOAT_AS_DOUBLE
 struct Options
 {
     Options() {

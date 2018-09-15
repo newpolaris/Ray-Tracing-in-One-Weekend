@@ -37,3 +37,5 @@ void pbrtCamera(const std::string &, const ParamSet &cameraParams);
 void pbrtMakeNamedMedium(const std::string &name, const ParamSet &params);
 void pbrtMediumInterface(const std::string &insideName,
                          const std::string &outsideName);
+void pbrtLookAt(Float ex, Float ey, Float ez, Float lx, Float ly, Float lz,
+                Float ux, Float uy, Float uz);

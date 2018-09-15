@@ -151,3 +151,5 @@ private:
     // after a subsequent call, since we may reuse sEscaped.)
     std::string sEscaped;
 };
+
+void pbrtParseFile(std::string filename);

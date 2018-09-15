@@ -498,7 +498,8 @@ static void parse(std::unique_ptr<Tokenizer> t)
             break;
         case 'I':
             if (tok == "Integrator")
-                ;
+                basicParamListEntrypoint(SpectrumType::Reflectance,
+                                         pbrtIntegrator);
             else if (tok == "Include") {
                 // Switch to the given file.
                 std::string filename =
@@ -517,6 +518,22 @@ static void parse(std::unique_ptr<Tokenizer> t)
                 }
             }
             break;
+        case 'L':
+            if (tok == "LightSource")
+                ;
+            else if (tok == "LookAt") {
+                float v[9];
+                for (int i = 0; i < 9; ++i)
+                    v[i] = parseNumber(nextToken(TokenRequired));
+                pbrtLookAt(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7],
+                           v[8]);
+            } else
+                syntaxError(tok);
+            break;
+
+        default:
+            syntaxError(tok);
+            break;
 		}
 	}
 }
@@ -528,14 +545,11 @@ std::unique_ptr<Tokenizer> Tokenizer::CreateFromString(
         new Tokenizer(std::move(str), std::move(errorCallback)));
 }
 
-void parseFile(std::string filename)
+void pbrtParseFile(std::string filename)
 {
 	if (filename != "-") SetSearchDirectory(DirectoryContaining(filename));
 
-	auto tokError = [](const char* msg) { 
-		std::cerr << msg << std::endl;
-		exit(1);
-	};
+	auto tokError = [](const char* msg) { Error("%s", msg); exit(1); };
 	std::unique_ptr<Tokenizer> t = 
 		Tokenizer::CreateFromFile(filename, tokError);
 	if (!t) return;
