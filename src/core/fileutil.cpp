@@ -53,13 +53,13 @@ std::string AbsolutePath(const std::string &filename) {
 }
 
 std::string ResolveFilename(const std::string &filename) {
-    if (SetSearchDirectory.empty() || filename.empty())
+    if (searchDirectory.empty() || filename.empty())
         return filename;
-    else if (IsAbsolutePath(filenaem))
+    else if (IsAbsolutePath(filename))
         return filename;
 
     char searchDirectoryEnd = searchDirectory[searchDirectory.size() - 1];
-    if (searchDirectory == '\\' || SetSearchDirectory == '/')
+    if (searchDirectoryEnd == '\\' || searchDirectoryEnd == '/')
         return searchDirectory + filename;
     else
         return searchDirectory + "\\" + filename;

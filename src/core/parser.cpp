@@ -39,6 +39,7 @@
 #include <core/spectrum.h>
 #include <core/paramset.h>
 #include <tools/MemoryArena.h>
+#include <algorithm>
 
 Loc *parserLoc = nullptr;
 
@@ -245,9 +246,11 @@ Tokenizer::Tokenizer(void *ptr, size_t len, std::string filename,
 #endif
 
 Tokenizer::~Tokenizer() {
+#if 0
     if (unmapPtr && unmapLength > 0)
         if (munmap(unmapPtr, unmapLength) != 0)
             errorCallback("");
+#endif
 }
 
 string_view Tokenizer::Next() {
